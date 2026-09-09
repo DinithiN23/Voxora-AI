@@ -6,7 +6,8 @@ import { api } from "@/lib/api";
 import { useConversationStore } from "@/stores/conversationStore";
 import { useAuthStore } from "@/stores/authStore";
 import MarkdownRenderer from "@/components/chat/MarkdownRenderer";
-import type { ConversationDetail } from "@/types/api";
+import VisualizationViewer from "@/components/visualizations/VisualizationViewer";
+import type { ConversationDetail, Visualization } from "@/types/api";
 import styles from "./ask.module.css";
 
 interface ChatMessage {
@@ -16,6 +17,7 @@ interface ChatMessage {
   inputMode: "text" | "voice";
   timestamp: Date;
   isStreaming?: boolean;
+  visualizations?: Visualization[];
 }
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -73,11 +75,11 @@ function AskContent() {
           content: m.content,
           inputMode: m.input_mode || "text",
           timestamp: new Date(m.created_at),
+          visualizations: m.visualizations || [],
         }));
 
         setMessages(loadedMessages);
 
-        // Extract suggestions or defaults if last message is assistant
         const lastMsg = loadedMessages[loadedMessages.length - 1];
         if (lastMsg && lastMsg.role === "assistant") {
           setSuggestions([
@@ -141,7 +143,7 @@ function AskContent() {
     setIsListening(true);
     setTimeout(() => {
       setIsListening(false);
-      sendMessage("How are sales performing this month?", "voice");
+      sendMessage("What were our top 3 products by revenue?", "voice");
     }, 2000);
   };
 
@@ -156,7 +158,6 @@ function AskContent() {
     }
 
     window.speechSynthesis.cancel();
-    // Strip markdown formatting for cleaner speech
     const cleanText = text
       .replace(/[*_#`~|]/g, "")
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
@@ -177,7 +178,7 @@ function AskContent() {
     setTimeout(() => setCopiedMsgId(null), 2000);
   };
 
-  // Send message with Real-Time SSE Streaming
+  // Send message with Real-Time SSE Streaming & Visualizations
   const sendMessage = useCallback(
     async (text: string, mode: "text" | "voice" = "text") => {
       if (!text.trim() || isTyping) return;
@@ -228,6 +229,7 @@ function AskContent() {
         inputMode: "text",
         timestamp: new Date(),
         isStreaming: true,
+        visualizations: [],
       };
 
       setMessages((prev) => [...prev, assistantPlaceholder]);
@@ -265,7 +267,22 @@ function AskContent() {
                   try {
                     const data = JSON.parse(line.slice(6));
 
-                    if (data.type === "token") {
+                    if (data.type === "visualization") {
+                      // Attach chart payload to message in real time
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === aiTempId
+                            ? {
+                                ...msg,
+                                visualizations: [
+                                  ...(msg.visualizations || []),
+                                  data.visualization,
+                                ],
+                              }
+                            : msg
+                        )
+                      );
+                    } else if (data.type === "token") {
                       accumulatedContent += data.token;
                       setMessages((prev) =>
                         prev.map((msg) =>
@@ -319,7 +336,7 @@ function AskContent() {
       // 4. Fallback simulation
       await new Promise((resolve) => setTimeout(resolve, 800));
       const simulatedText =
-        "Based on the available business data, September sales are currently tracking at **$2.4M**, which represents an **8.7% increase** compared to the same period last month.\n\nKey highlights:\n- Daily average: **$343K**\n- Strongest day: September 3 ($412K)\n- On track to exceed the monthly target of **$3.2M**";
+        "Based on Google BigQuery analytics data, **September sales are currently tracking at $2.4M**, which represents an **8.7% increase** compared to last month.";
 
       setMessages((prev) =>
         prev.map((msg) =>
@@ -356,10 +373,10 @@ function AskContent() {
   };
 
   const defaultSuggestions = [
-    { icon: "📈", text: "How are sales performing this month?" },
-    { icon: "🏆", text: "What are our top 10 products?" },
-    { icon: "📊", text: "Compare this month with last month" },
-    { icon: "🌍", text: "Show regional performance breakdown" },
+    { icon: "🏆", text: "What were our top 3 products by revenue?" },
+    { icon: "🌍", text: "Show revenue breakdown by region" },
+    { icon: "📈", text: "How is daily revenue trending?" },
+    { icon: "💰", text: "What is our overall profit margin %?" },
   ];
 
   const hasMessages = messages.length > 0;
@@ -375,7 +392,7 @@ function AskContent() {
             Good afternoon, <span className="vx-gradient-text">{greetingName}</span>
           </h1>
           <p className={styles.welcomeSubtitle}>
-            What would you like to explore about your business data today?
+            Connected to Google BigQuery. Ask anything to analyze your business metrics and generate dynamic charts.
           </p>
 
           {/* Voice Input Action */}
@@ -427,6 +444,15 @@ function AskContent() {
                   <div className={styles.assistantAvatar}>V</div>
                   <div className={styles.assistantBubbleWrapper}>
                     <div className={styles.assistantBubble}>
+                      {/* Dynamic Visualizations from BigQuery */}
+                      {msg.visualizations && msg.visualizations.length > 0 && (
+                        <div>
+                          {msg.visualizations.map((viz, vIdx) => (
+                            <VisualizationViewer key={viz.id || vIdx} viz={viz} />
+                          ))}
+                        </div>
+                      )}
+
                       <MarkdownRenderer
                         content={msg.content}
                         isStreaming={msg.isStreaming}
@@ -463,7 +489,8 @@ function AskContent() {
           {isTyping &&
             messages.length > 0 &&
             messages[messages.length - 1]?.role === "assistant" &&
-            !messages[messages.length - 1]?.content && (
+            !messages[messages.length - 1]?.content &&
+            (!messages[messages.length - 1]?.visualizations || messages[messages.length - 1]?.visualizations?.length === 0) && (
               <div className={styles.typingIndicator}>
                 <div className={styles.assistantAvatar}>V</div>
                 <div className={styles.typingDots}>
@@ -501,7 +528,7 @@ function AskContent() {
             ref={inputRef}
             type="text"
             className={styles.textInput}
-            placeholder="Ask anything about your metrics, products, or revenue..."
+            placeholder="Ask anything about your BigQuery metrics, products, or revenue..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isTyping}
@@ -524,7 +551,7 @@ function AskContent() {
           </button>
         </form>
         <p className={styles.inputHint}>
-          Voxora AI • Fast conversational business intelligence • Verify crucial decisions
+          Voxora AI • Connected to Google BigQuery • Real-time analytical SQL engine
         </p>
       </div>
     </div>
