@@ -12,7 +12,8 @@ import logging
 from typing import Any
 
 import httpx
-from groq import Groq
+from collections.abc import AsyncGenerator
+from groq import AsyncGroq, Groq
 
 from app.config import get_settings
 
@@ -44,17 +45,9 @@ class LLMService:
     ) -> str:
         """Generate a response using the configured primary provider with automatic fallback."""
         prompt = system_prompt or VOXORA_SYSTEM_PROMPT
-        primary = (self.settings.llm_provider or "gemini").lower()
+        primary = (self.settings.llm_provider or "groq").lower()
 
-        if primary == "gemini":
-            try:
-                return await self._call_gemini(messages, prompt)
-            except Exception as e:
-                logger.warning("Gemini failed (%s). Falling back to Groq...", e)
-                if self.settings.groq_api_key:
-                    return await self._call_groq(messages, prompt)
-                raise
-        else:
+        if primary == "groq" and self.settings.groq_api_key:
             try:
                 return await self._call_groq(messages, prompt)
             except Exception as e:
@@ -62,6 +55,74 @@ class LLMService:
                 if self.settings.gemini_api_key:
                     return await self._call_gemini(messages, prompt)
                 raise
+        else:
+            try:
+                return await self._call_gemini(messages, prompt)
+            except Exception as e:
+                logger.warning("Gemini failed (%s). Falling back to Groq...", e)
+                if self.settings.groq_api_key:
+                    return await self._call_groq(messages, prompt)
+                raise
+
+    async def stream_response(
+        self,
+        messages: list[dict[str, str]],
+        system_prompt: str | None = None,
+    ) -> AsyncGenerator[str, None]:
+        """Stream tokens using Groq (or fallback). Yields string chunks."""
+        prompt = system_prompt or VOXORA_SYSTEM_PROMPT
+        primary = (self.settings.llm_provider or "groq").lower()
+
+        if primary == "groq" and self.settings.groq_api_key:
+            try:
+                async for chunk in self._stream_groq(messages, prompt):
+                    yield chunk
+                return
+            except Exception as e:
+                logger.warning("Groq streaming failed (%s). Falling back to non-streaming...", e)
+
+        # Fallback: non-streaming call, yield chunks
+        try:
+            full_text = await self.generate_response(messages, prompt)
+            # Yield in smaller word chunks to simulate smooth flow
+            words = full_text.split(" ")
+            for i, word in enumerate(words):
+                yield word + (" " if i < len(words) - 1 else "")
+        except Exception as e:
+            logger.error("All LLM providers failed for streaming: %s", e)
+            fallback = "I encountered an issue processing your request. Please check your data source or try again."
+            yield fallback
+
+    async def _stream_groq(
+        self,
+        messages: list[dict[str, str]],
+        system_prompt: str,
+    ) -> AsyncGenerator[str, None]:
+        """Stream tokens from Groq API asynchronously using AsyncGroq."""
+        api_key = self.settings.groq_api_key
+        if not api_key:
+            raise ValueError("GROQ_API_KEY is not configured.")
+
+        model = self.settings.groq_model or "qwen/qwen3.8-27b"
+        client = AsyncGroq(api_key=api_key)
+
+        formatted_messages = [{"role": "system", "content": system_prompt}]
+        for msg in messages:
+            role = "assistant" if msg.get("role") == "assistant" else "user"
+            formatted_messages.append({"role": role, "content": msg.get("content", "")})
+
+        stream = await client.chat.completions.create(
+            model=model,
+            messages=formatted_messages,
+            temperature=0.7,
+            max_tokens=1024,
+            stream=True,
+        )
+
+        async for chunk in stream:
+            delta = chunk.choices[0].delta.content or ""
+            if delta:
+                yield delta
 
     async def _call_gemini(
         self,
@@ -100,7 +161,7 @@ class LLMService:
             response = await client.post(url, json=payload)
             if response.status_code != 200:
                 raise RuntimeError(f"Gemini API error {response.status_code}: {response.text}")
-            
+
             data = response.json()
             candidates = data.get("candidates", [])
             if candidates and "content" in candidates[0]:
@@ -114,31 +175,26 @@ class LLMService:
         messages: list[dict[str, str]],
         system_prompt: str,
     ) -> str:
-        """Call Groq API asynchronously."""
-        import asyncio
-
+        """Call Groq API asynchronously using AsyncGroq."""
         api_key = self.settings.groq_api_key
         if not api_key:
             raise ValueError("GROQ_API_KEY is not configured.")
 
         model = self.settings.groq_model or "qwen/qwen3.8-27b"
+        client = AsyncGroq(api_key=api_key)
 
-        def _sync_groq() -> str:
-            client = Groq(api_key=api_key)
-            formatted_messages = [{"role": "system", "content": system_prompt}]
-            for msg in messages:
-                role = "assistant" if msg.get("role") == "assistant" else "user"
-                formatted_messages.append({"role": role, "content": msg.get("content", "")})
+        formatted_messages = [{"role": "system", "content": system_prompt}]
+        for msg in messages:
+            role = "assistant" if msg.get("role") == "assistant" else "user"
+            formatted_messages.append({"role": role, "content": msg.get("content", "")})
 
-            completion = client.chat.completions.create(
-                model=model,
-                messages=formatted_messages,
-                temperature=0.7,
-                max_tokens=1024,
-            )
-            return completion.choices[0].message.content.strip()
-
-        return await asyncio.to_thread(_sync_groq)
+        completion = await client.chat.completions.create(
+            model=model,
+            messages=formatted_messages,
+            temperature=0.7,
+            max_tokens=1024,
+        )
+        return completion.choices[0].message.content.strip()
 
     async def generate_suggestions(self, last_query: str, last_response: str) -> list[str]:
         """Generate 3 smart follow-up suggestions based on context."""
