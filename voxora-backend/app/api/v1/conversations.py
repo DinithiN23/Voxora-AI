@@ -4,14 +4,17 @@ Voxora Backend — Conversations API endpoints.
 Handles conversation CRUD and message sending (the core "Ask Voxora" flow).
 """
 
+import json
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import TokenPayload, get_current_user
-from app.db.session import get_db
+from app.db.session import async_session_factory, get_db
 from app.models.conversation import Conversation, Message
 from app.schemas.conversation import (
     AskResponse,
@@ -20,9 +23,12 @@ from app.schemas.conversation import (
     CreateConversationRequest,
     MessageResponse,
     SendMessageRequest,
+    UpdateConversationRequest,
     VisualizationResponse,
 )
 from app.services.llm_service import llm_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/conversations", tags=["Conversations"])
 
@@ -230,12 +236,159 @@ async def send_message(
         created_at=ai_message.created_at,
     )
 
-    suggestions = _generate_suggestions(request.content)
+    suggestions = await llm_service.generate_suggestions(request.content, ai_response_text)
 
     return AskResponse(
         message=response_message,
         suggestions=suggestions,
         voice_url=None,
+    )
+
+
+@router.post("/{conversation_id}/messages/stream")
+async def send_message_stream(
+    conversation_id: UUID,
+    request: SendMessageRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+):
+    """
+    Stream AI responses using Server-Sent Events (SSE).
+
+    Flow:
+    1. Validates and saves the user question to PostgreSQL.
+    2. Auto-generates conversation title if it's the first message.
+    3. Streams LLM tokens in real time (via Groq / fallback).
+    4. Persists the complete assistant response into PostgreSQL.
+    5. Yields final metadata event with follow-up suggestion chips.
+    """
+
+    async def event_generator():
+        async with async_session_factory() as db:
+            try:
+                # 1. Verify conversation belongs to user
+                result = await db.execute(
+                    select(Conversation).where(
+                        Conversation.id == conversation_id,
+                        Conversation.user_id == current_user.user_id,
+                    )
+                )
+                conversation = result.scalar_one_or_none()
+                if not conversation:
+                    yield f"data: {json.dumps({'type': 'error', 'error': 'Conversation not found'})}\n\n"
+                    return
+
+                # 2. Save user message
+                user_msg = Message(
+                    conversation_id=conversation.id,
+                    role="user",
+                    content=request.content,
+                    input_mode=request.input_mode,
+                )
+                db.add(user_msg)
+
+                # Auto-title if new or empty
+                if not conversation.title or conversation.title == "New Conversation":
+                    conversation.title = request.content[:60]
+
+                await db.commit()
+
+                # 3. Fetch chat history for conversational context
+                history_result = await db.execute(
+                    select(Message)
+                    .where(Message.conversation_id == conversation.id)
+                    .order_by(Message.created_at.asc())
+                )
+                chat_history = [
+                    {"role": m.role, "content": m.content}
+                    for m in history_result.scalars().all()
+                    if m.role in ("user", "assistant")
+                ]
+
+                # 4. Stream LLM tokens
+                collected_chunks: list[str] = []
+                try:
+                    async for chunk in llm_service.stream_response(chat_history):
+                        collected_chunks.append(chunk)
+                        yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+                except Exception as stream_err:
+                    logger.error("Streaming error: %s", stream_err)
+                    fallback_chunk = _generate_placeholder_response(request.content)
+                    collected_chunks.append(fallback_chunk)
+                    yield f"data: {json.dumps({'type': 'token', 'token': fallback_chunk})}\n\n"
+
+                full_content = "".join(collected_chunks).strip()
+
+                # 5. Persist assistant message to DB
+                ai_msg = Message(
+                    conversation_id=conversation.id,
+                    role="assistant",
+                    content=full_content,
+                    input_mode="text",
+                )
+                db.add(ai_msg)
+                await db.commit()
+                await db.refresh(ai_msg)
+
+                # 6. Generate smart follow-up suggestions
+                suggestions = await llm_service.generate_suggestions(request.content, full_content)
+
+                # 7. Yield final completion event
+                yield f"data: {json.dumps({'type': 'done', 'message_id': str(ai_msg.id), 'suggestions': suggestions, 'title': conversation.title})}\n\n"
+
+            except Exception as e:
+                logger.error("Fatal error in stream generator: %s", e)
+                yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@router.patch("/{conversation_id}", response_model=ConversationResponse)
+async def update_conversation(
+    conversation_id: UUID,
+    request: UpdateConversationRequest,
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update conversation title or archive status."""
+
+    result = await db.execute(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == current_user.user_id,
+        )
+    )
+    conversation = result.scalar_one_or_none()
+
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+
+    if request.title is not None:
+        conversation.title = request.title.strip()
+    if request.status is not None:
+        conversation.status = request.status
+
+    await db.flush()
+
+    count_res = await db.execute(
+        select(func.count(Message.id)).where(Message.conversation_id == conversation.id)
+    )
+    message_count = count_res.scalar() or 0
+
+    return ConversationResponse(
+        id=conversation.id,
+        title=conversation.title,
+        status=conversation.status,
+        message_count=message_count,
+        created_at=conversation.created_at,
+        updated_at=conversation.updated_at,
     )
 
 

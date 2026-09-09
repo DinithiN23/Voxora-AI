@@ -52,6 +52,12 @@ class CreateConversationRequest(BaseModel):
     title: str | None = None
 
 
+class UpdateConversationRequest(BaseModel):
+    """Update conversation properties (title, status)."""
+    title: str | None = Field(default=None, max_length=120)
+    status: str | None = Field(default=None, pattern="^(active|archived)$")
+
+
 class ConversationResponse(BaseModel):
     """A conversation summary."""
     id: UUID

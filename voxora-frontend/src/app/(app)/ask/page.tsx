@@ -1,7 +1,12 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { useConversationStore } from "@/stores/conversationStore";
+import { useAuthStore } from "@/stores/authStore";
+import MarkdownRenderer from "@/components/chat/MarkdownRenderer";
+import type { ConversationDetail } from "@/types/api";
 import styles from "./ask.module.css";
 
 interface ChatMessage {
@@ -10,188 +15,32 @@ interface ChatMessage {
   content: string;
   inputMode: "text" | "voice";
   timestamp: Date;
+  isStreaming?: boolean;
 }
 
-// Simple markdown-like rendering for bold and tables
-function renderContent(content: string) {
-  const lines = content.split("\n");
-  const elements: React.ReactNode[] = [];
-  let tableRows: string[][] = [];
-  let inTable = false;
-  let tableKey = 0;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  const processInline = (text: string) => {
-    // Bold: **text**
-    const parts = text.split(/(\*\*[^*]+\*\*)/g);
-    return parts.map((part, i) => {
-      if (part.startsWith("**") && part.endsWith("**")) {
-        return <strong key={i}>{part.slice(2, -2)}</strong>;
-      }
-      return part;
-    });
-  };
+function AskContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const urlConvId = searchParams.get("id");
 
-  const flushTable = () => {
-    if (tableRows.length > 0) {
-      const header = tableRows[0];
-      const body = tableRows.slice(1).filter(
-        (row) => !row.every((cell) => /^[-|:\s]+$/.test(cell))
-      );
+  const { addOrUpdateConversation, fetchConversations, setActiveConversationId } =
+    useConversationStore();
+  const { user } = useAuthStore();
 
-      elements.push(
-        <table key={`table-${tableKey++}`}>
-          <thead>
-            <tr>
-              {header.map((cell, i) => (
-                <th key={i}>{processInline(cell.trim())}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {body.map((row, ri) => (
-              <tr key={ri}>
-                {row.map((cell, ci) => (
-                  <td key={ci}>{processInline(cell.trim())}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      );
-      tableRows = [];
-    }
-    inTable = false;
-  };
-
-  lines.forEach((line, i) => {
-    if (line.startsWith("|")) {
-      inTable = true;
-      const cells = line
-        .split("|")
-        .filter((c) => c.trim() !== "");
-      tableRows.push(cells);
-    } else {
-      if (inTable) flushTable();
-
-      if (line.startsWith("- ")) {
-        elements.push(
-          <div key={i} style={{ paddingLeft: "16px", marginBottom: "4px" }}>
-            • {processInline(line.slice(2))}
-          </div>
-        );
-      } else if (line.trim() === "") {
-        elements.push(<br key={i} />);
-      } else {
-        elements.push(
-          <p key={i} style={{ marginBottom: "4px" }}>
-            {processInline(line)}
-          </p>
-        );
-      }
-    }
-  });
-
-  if (inTable) flushTable();
-
-  return elements;
-}
-
-// Simulated AI responses for demo
-function getSimulatedResponse(question: string): {
-  content: string;
-  suggestions: string[];
-} {
-  const q = question.toLowerCase();
-
-  if (q.includes("sales") && (q.includes("month") || q.includes("today"))) {
-    return {
-      content:
-        "Based on the available data, September sales are currently tracking at **$2.4M**, which represents an **8.7% increase** compared to the same period last month.\n\nKey highlights:\n- Daily average: $343K\n- Strongest day: September 3 ($412K)\n- On track to exceed the monthly target of $3.2M",
-      suggestions: [
-        "What are the top-performing products?",
-        "Compare with last month",
-        "Show sales by region",
-        "Which region is growing fastest?",
-      ],
-    };
-  }
-
-  if (q.includes("top") && q.includes("product")) {
-    return {
-      content:
-        "Here are the **top-selling products** this month:\n\n| Rank | Product | Units | Revenue |\n|------|---------|-------|---------|\n| 1 | Product A | 12,450 | $430K |\n| 2 | Product B | 10,320 | $381K |\n| 3 | Product C | 8,940 | $312K |\n| 4 | Product D | 6,780 | $242K |\n| 5 | Product E | 5,210 | $194K |\n\n**Product A** is the clear leader, contributing approximately **18%** of total product revenue. Product B is close behind with strong growth in the Eastern region.",
-      suggestions: [
-        "Compare these with last month",
-        "Show revenue by region for Product A",
-        "Which products are declining?",
-        "What's the profit margin by product?",
-      ],
-    };
-  }
-
-  if (q.includes("compare") || q.includes("last month")) {
-    return {
-      content:
-        "Comparing current month with last month:\n\n| Metric | This Month | Last Month | Change |\n|--------|-----------|------------|--------|\n| Revenue | $2.4M | $2.21M | ↑ 8.7% |\n| Orders | 3,842 | 3,510 | ↑ 9.5% |\n| Avg Order Value | $625 | $630 | ↓ 0.8% |\n| New Customers | 284 | 251 | ↑ 13.1% |\n\nRevenue is growing primarily due to **higher order volume** rather than increased order values. The **13.1% increase** in new customers is a particularly positive signal.",
-      suggestions: [
-        "Why did revenue increase?",
-        "Show the trend over 6 months",
-        "Which category grew the most?",
-        "Forecast next month",
-      ],
-    };
-  }
-
-  if (
-    q.includes("why") &&
-    (q.includes("drop") || q.includes("decrease") || q.includes("fell") || q.includes("decline") || q.includes("increase"))
-  ) {
-    return {
-      content:
-        "Analysing the performance change:\n\nThe largest contributing factor was activity in the **Western region**, where order volume changed by **22%**.\n\nPotential causes:\n- A major distributor reported inventory changes\n- Competitor launched a campaign in the same region\n- Seasonal patterns show historical trends in this period\n\nWould you like me to drill deeper into the regional data?",
-      suggestions: [
-        "Show me Western region details",
-        "Break down by customer segment",
-        "Show channel performance",
-        "What about other regions?",
-      ],
-    };
-  }
-
-  if (q.includes("region") || q.includes("western")) {
-    return {
-      content:
-        "Here's the **regional performance** breakdown:\n\n| Region | Revenue | Orders | Growth |\n|--------|---------|--------|--------|\n| Eastern | $820K | 1,245 | ↑ 14.2% |\n| Western | $580K | 892 | ↓ 6.8% |\n| Central | $640K | 1,024 | ↑ 9.1% |\n| Southern | $360K | 681 | ↑ 3.4% |\n\nThe **Eastern region** continues to outperform all others. The Western region's decline warrants attention — particularly the drop in new customer acquisition.",
-      suggestions: [
-        "Drill into Eastern region",
-        "Show customer trends by region",
-        "Compare regional performance over 6 months",
-        "What products sell best in each region?",
-      ],
-    };
-  }
-
-  return {
-    content:
-      "I understand your question. In the current preview, I'm using sample responses to demonstrate the conversational flow.\n\nOnce connected to your data sources, I'll be able to:\n- Query your business data in real-time\n- Provide accurate insights and analysis\n- Generate dynamic visualizations\n- Remember context for follow-up questions\n\nTry asking about **sales performance**, **top products**, **comparisons**, or **regional data**!",
-    suggestions: [
-      "How are sales this month?",
-      "Show top-selling products",
-      "Compare this month with last month",
-      "Show regional performance",
-    ],
-  };
-}
-
-export default function AskPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(urlConvId);
+  const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -201,14 +50,146 @@ export default function AskPage() {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
 
+  // Load conversation when URL parameter changes (e.g. clicked in sidebar)
+  useEffect(() => {
+    setConversationId(urlConvId);
+    setActiveConversationId(urlConvId);
+
+    if (!urlConvId) {
+      setMessages([]);
+      setSuggestions([]);
+      return;
+    }
+
+    let isMounted = true;
+    const loadConversation = async () => {
+      try {
+        const detail = await api.get<ConversationDetail>(`/api/v1/conversations/${urlConvId}`);
+        if (!isMounted) return;
+
+        const loadedMessages: ChatMessage[] = (detail.messages || []).map((m) => ({
+          id: m.id,
+          role: m.role as "user" | "assistant",
+          content: m.content,
+          inputMode: m.input_mode || "text",
+          timestamp: new Date(m.created_at),
+        }));
+
+        setMessages(loadedMessages);
+
+        // Extract suggestions or defaults if last message is assistant
+        const lastMsg = loadedMessages[loadedMessages.length - 1];
+        if (lastMsg && lastMsg.role === "assistant") {
+          setSuggestions([
+            "Break this down further",
+            "What is driving this change?",
+            "Show regional breakdown",
+          ]);
+        }
+      } catch (err) {
+        console.warn("Failed to load conversation thread:", err);
+      }
+    };
+
+    loadConversation();
+    return () => {
+      isMounted = false;
+    };
+  }, [urlConvId, setActiveConversationId]);
+
+  // Handle Speech Recognition
+  const toggleVoice = () => {
+    if (isListening) {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRec =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (SpeechRec) {
+      try {
+        const recognition = new SpeechRec();
+        recognitionRef.current = recognition;
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = "en-US";
+
+        recognition.onstart = () => setIsListening(true);
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript;
+          if (transcript) {
+            setInput(transcript);
+            sendMessage(transcript, "voice");
+          }
+          setIsListening(false);
+        };
+        recognition.onerror = () => setIsListening(false);
+        recognition.onend = () => setIsListening(false);
+
+        recognition.start();
+        return;
+      } catch (e) {
+        console.warn("Speech recognition error:", e);
+      }
+    }
+
+    // Demo simulation fallback
+    setIsListening(true);
+    setTimeout(() => {
+      setIsListening(false);
+      sendMessage("How are sales performing this month?", "voice");
+    }, 2000);
+  };
+
+  // Text-to-speech
+  const handleSpeak = (text: string, id: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    if (speakingMsgId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingMsgId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    // Strip markdown formatting for cleaner speech
+    const cleanText = text
+      .replace(/[*_#`~|]/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.05;
+    utterance.onend = () => setSpeakingMsgId(null);
+    utterance.onerror = () => setSpeakingMsgId(null);
+
+    setSpeakingMsgId(id);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Copy message
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedMsgId(id);
+    setTimeout(() => setCopiedMsgId(null), 2000);
+  };
+
+  // Send message with Real-Time SSE Streaming
   const sendMessage = useCallback(
     async (text: string, mode: "text" | "voice" = "text") => {
-      if (!text.trim()) return;
+      if (!text.trim() || isTyping) return;
+
+      const userText = text.trim();
+      const userMsgId = crypto.randomUUID();
+      const aiTempId = crypto.randomUUID();
 
       const userMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: userMsgId,
         role: "user",
-        content: text.trim(),
+        content: userText,
         inputMode: mode,
         timestamp: new Date(),
       };
@@ -218,94 +199,161 @@ export default function AskPage() {
       setSuggestions([]);
       setIsTyping(true);
 
-      // Attempt real AI call via backend
+      let activeId = conversationId;
+
+      // 1. Ensure conversation exists on backend
       try {
-        let convId = conversationId;
-        if (!convId) {
-          try {
-            const newConv = await api.post<{ id: string }>("/api/v1/conversations", {
-              title: text.trim().slice(0, 60),
-            });
-            convId = newConv.id;
-            setConversationId(convId);
-          } catch {
-            // Unauthenticated or offline fallback
-          }
-        }
-
-        if (convId) {
-          const res = await api.post<{
-            message: { id: string; content: string; role: string };
-            suggestions: string[];
-          }>(`/api/v1/conversations/${convId}/messages`, {
-            content: text.trim(),
-            input_mode: mode,
+        if (!activeId) {
+          const newConv = await api.post<{ id: string; title: string }>("/api/v1/conversations", {
+            title: userText.slice(0, 60),
           });
-
-          const aiMsg: ChatMessage = {
-            id: res.message.id,
-            role: "assistant",
-            content: res.message.content,
-            inputMode: "text",
-            timestamp: new Date(),
-          };
-
-          setMessages((prev) => [...prev, aiMsg]);
-          if (res.suggestions && res.suggestions.length > 0) {
-            setSuggestions(res.suggestions);
-          }
-          setIsTyping(false);
-          return;
+          activeId = newConv.id;
+          setConversationId(activeId);
+          setActiveConversationId(activeId);
+          router.replace(`/ask?id=${activeId}`);
+          addOrUpdateConversation({
+            id: activeId,
+            title: newConv.title || userText.slice(0, 60),
+          });
         }
       } catch (err) {
-        console.warn("Backend conversation call failed, falling back to local simulation:", err);
+        console.warn("Could not create conversation on backend:", err);
       }
 
-      // Graceful fallback simulation
-      await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 500));
-
-      const response = getSimulatedResponse(text);
-
-      const aiMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+      // 2. Placeholder assistant message with isStreaming: true
+      const assistantPlaceholder: ChatMessage = {
+        id: aiTempId,
         role: "assistant",
-        content: response.content,
+        content: "",
         inputMode: "text",
         timestamp: new Date(),
+        isStreaming: true,
       };
 
-      setMessages((prev) => [...prev, aiMsg]);
-      setSuggestions(response.suggestions);
+      setMessages((prev) => [...prev, assistantPlaceholder]);
+
+      // 3. Connect to SSE streaming endpoint
+      if (activeId) {
+        try {
+          const token = api.getToken();
+          const response = await fetch(`${API_BASE}/api/v1/conversations/${activeId}/messages/stream`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              content: userText,
+              input_mode: mode,
+            }),
+          });
+
+          if (response.ok && response.body) {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            let accumulatedContent = "";
+
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split("\n");
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  try {
+                    const data = JSON.parse(line.slice(6));
+
+                    if (data.type === "token") {
+                      accumulatedContent += data.token;
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === aiTempId
+                            ? { ...msg, content: accumulatedContent, isStreaming: true }
+                            : msg
+                        )
+                      );
+                    } else if (data.type === "done") {
+                      setMessages((prev) =>
+                        prev.map((msg) =>
+                          msg.id === aiTempId
+                            ? {
+                                ...msg,
+                                id: data.message_id || aiTempId,
+                                content: accumulatedContent,
+                                isStreaming: false,
+                              }
+                            : msg
+                        )
+                      );
+
+                      if (data.suggestions && data.suggestions.length > 0) {
+                        setSuggestions(data.suggestions);
+                      }
+
+                      if (data.title) {
+                        addOrUpdateConversation({
+                          id: activeId!,
+                          title: data.title,
+                        });
+                      }
+
+                      fetchConversations();
+                    }
+                  } catch {
+                    // Ignore SSE parse errors for partial chunks
+                  }
+                }
+              }
+            }
+
+            setIsTyping(false);
+            return;
+          }
+        } catch (streamErr) {
+          console.warn("SSE stream failed, attempting standard API or demo fallback:", streamErr);
+        }
+      }
+
+      // 4. Fallback simulation
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const simulatedText =
+        "Based on the available business data, September sales are currently tracking at **$2.4M**, which represents an **8.7% increase** compared to the same period last month.\n\nKey highlights:\n- Daily average: **$343K**\n- Strongest day: September 3 ($412K)\n- On track to exceed the monthly target of **$3.2M**";
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiTempId
+            ? {
+                ...msg,
+                content: simulatedText,
+                isStreaming: false,
+              }
+            : msg
+        )
+      );
+
+      setSuggestions([
+        "What are our top-selling products?",
+        "Compare with last month",
+        "Show regional breakdown",
+      ]);
       setIsTyping(false);
     },
-    [conversationId]
+    [
+      conversationId,
+      isTyping,
+      router,
+      addOrUpdateConversation,
+      fetchConversations,
+      setActiveConversationId,
+    ]
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
   };
-
-  const handleSuggestionClick = (suggestion: string) => {
-    sendMessage(suggestion);
-  };
-
-  const toggleVoice = () => {
-    if (isListening) {
-      setIsListening(false);
-      // In production: stop SpeechRecognition
-    } else {
-      setIsListening(true);
-      // In production: start SpeechRecognition
-      // Simulate voice input for demo
-      setTimeout(() => {
-        setIsListening(false);
-        sendMessage("How are sales performing this month?", "voice");
-      }, 2500);
-    }
-  };
-
-  const hasMessages = messages.length > 0;
 
   const defaultSuggestions = [
     { icon: "📈", text: "How are sales performing this month?" },
@@ -314,6 +362,9 @@ export default function AskPage() {
     { icon: "🌍", text: "Show regional performance breakdown" },
   ];
 
+  const hasMessages = messages.length > 0;
+  const greetingName = user?.name ? user.name.split(" ")[0] : "Dinithi";
+
   return (
     <div className={styles.askPage}>
       {!hasMessages ? (
@@ -321,43 +372,44 @@ export default function AskPage() {
         <div className={styles.welcomeContainer}>
           <div className={styles.welcomeOrb}>✨</div>
           <h1 className={styles.welcomeTitle}>
-            Good afternoon, <span className="vx-gradient-text">Dinithi</span>
+            Good afternoon, <span className="vx-gradient-text">{greetingName}</span>
           </h1>
           <p className={styles.welcomeSubtitle}>
-            What would you like to know about your business?
+            What would you like to explore about your business data today?
           </p>
 
-          {/* Voice Button */}
+          {/* Voice Input Action */}
           <div className={styles.voiceSection}>
             <button
-              className={`${styles.voiceBtn} ${
-                isListening ? styles.listening : ""
-              }`}
+              type="button"
+              className={`${styles.voiceBtn} ${isListening ? styles.listening : ""}`}
               onClick={toggleVoice}
+              title={isListening ? "Listening... click to stop" : "Ask by voice"}
             >
               🎙️
             </button>
             <span className={styles.voiceLabel}>
-              {isListening ? "Listening..." : "Ask by voice"}
+              {isListening ? "Listening... speak now" : "Ask by voice"}
             </span>
           </div>
 
-          {/* Suggested Questions */}
+          {/* Quick Starter Questions */}
           <div className={styles.suggestions}>
             {defaultSuggestions.map((s, i) => (
               <button
                 key={i}
+                type="button"
                 className={styles.suggestionCard}
-                onClick={() => handleSuggestionClick(s.text)}
+                onClick={() => sendMessage(s.text)}
               >
                 <span className={styles.suggestionIcon}>{s.icon}</span>
-                {s.text}
+                <span>{s.text}</span>
               </button>
             ))}
           </div>
         </div>
       ) : (
-        /* ── Chat Area ──────────────────────────────────── */
+        /* ── Chat Messages Stream ────────────────────────── */
         <div className={styles.chatArea}>
           {messages.map((msg) => (
             <div key={msg.id} className={styles.messageGroup}>
@@ -365,7 +417,7 @@ export default function AskPage() {
                 <div className={styles.userMessage}>
                   <div className={styles.userBubble}>
                     {msg.inputMode === "voice" && (
-                      <div className={styles.voiceIndicator}>🎙️ Voice</div>
+                      <div className={styles.voiceIndicator}>🎙️ Voice Query</div>
                     )}
                     {msg.content}
                   </div>
@@ -373,25 +425,54 @@ export default function AskPage() {
               ) : (
                 <div className={styles.assistantMessage}>
                   <div className={styles.assistantAvatar}>V</div>
-                  <div className={styles.assistantBubble}>
-                    {renderContent(msg.content)}
+                  <div className={styles.assistantBubbleWrapper}>
+                    <div className={styles.assistantBubble}>
+                      <MarkdownRenderer
+                        content={msg.content}
+                        isStreaming={msg.isStreaming}
+                      />
+                    </div>
+
+                    {!msg.isStreaming && msg.content && (
+                      <div className={styles.messageActions}>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => handleCopy(msg.content, msg.id)}
+                          title="Copy answer"
+                        >
+                          {copiedMsgId === msg.id ? "✓ Copied" : "📋 Copy"}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.actionBtn}
+                          onClick={() => handleSpeak(msg.content, msg.id)}
+                          title={speakingMsgId === msg.id ? "Stop voice" : "Read aloud"}
+                        >
+                          {speakingMsgId === msg.id ? "⏹ Stop" : "🔊 Listen"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
           ))}
 
-          {/* Typing Indicator */}
-          {isTyping && (
-            <div className={styles.typingIndicator}>
-              <div className={styles.assistantAvatar}>V</div>
-              <div className={styles.typingDots}>
-                <div className={styles.typingDot} />
-                <div className={styles.typingDot} />
-                <div className={styles.typingDot} />
+          {/* Typing dots while waiting for first stream token */}
+          {isTyping &&
+            messages.length > 0 &&
+            messages[messages.length - 1]?.role === "assistant" &&
+            !messages[messages.length - 1]?.content && (
+              <div className={styles.typingIndicator}>
+                <div className={styles.assistantAvatar}>V</div>
+                <div className={styles.typingDots}>
+                  <div className={styles.typingDot} />
+                  <div className={styles.typingDot} />
+                  <div className={styles.typingDot} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Follow-up Suggestions */}
           {suggestions.length > 0 && !isTyping && (
@@ -399,8 +480,9 @@ export default function AskPage() {
               {suggestions.map((s, i) => (
                 <button
                   key={i}
+                  type="button"
                   className={styles.followUpChip}
-                  onClick={() => handleSuggestionClick(s)}
+                  onClick={() => sendMessage(s)}
                 >
                   {s}
                 </button>
@@ -412,24 +494,23 @@ export default function AskPage() {
         </div>
       )}
 
-      {/* ── Input Bar ────────────────────────────────────── */}
+      {/* ── Input Bar ──────────────────────────────────────── */}
       <div className={styles.inputArea}>
         <form className={styles.inputBar} onSubmit={handleSubmit}>
           <input
             ref={inputRef}
             type="text"
             className={styles.textInput}
-            placeholder="Ask anything about your business..."
+            placeholder="Ask anything about your metrics, products, or revenue..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isTyping}
           />
           <button
             type="button"
-            className={`${styles.inputVoiceBtn} ${
-              isListening ? styles.active : ""
-            }`}
+            className={`${styles.inputVoiceBtn} ${isListening ? styles.active : ""}`}
             onClick={toggleVoice}
+            title="Ask with voice"
           >
             🎙️
           </button>
@@ -437,14 +518,23 @@ export default function AskPage() {
             type="submit"
             className={styles.sendBtn}
             disabled={!input.trim() || isTyping}
+            title="Send query"
           >
             ➤
           </button>
         </form>
         <p className={styles.inputHint}>
-          Voxora can make mistakes. Always verify important data.
+          Voxora AI • Fast conversational business intelligence • Verify crucial decisions
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AskPage() {
+  return (
+    <Suspense fallback={<div className={styles.askPage} />}>
+      <AskContent />
+    </Suspense>
   );
 }
