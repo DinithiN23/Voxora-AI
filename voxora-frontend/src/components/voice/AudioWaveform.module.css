@@ -1,0 +1,70 @@
+.waveformContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  padding: var(--vx-space-xs) 0;
+}
+
+.canvas {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--vx-radius-md);
+  filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.35));
+  transition: filter var(--vx-duration-normal) var(--vx-ease);
+}
+
+.canvas.recording {
+  filter: drop-shadow(0 0 16px rgba(108, 92, 231, 0.6))
+          drop-shadow(0 0 30px rgba(6, 182, 212, 0.4));
+}
+
+.canvas.playing {
+  filter: drop-shadow(0 0 14px rgba(6, 182, 212, 0.5));
+}
+
+.statusPill {
+  margin-top: var(--vx-space-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--vx-text-xs);
+  font-weight: 500;
+  color: var(--vx-text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-full);
+  padding: 3px 10px;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--vx-radius-full);
+  background: var(--vx-text-muted);
+}
+
+.statusDot.recording {
+  background: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulseDot 1s ease-in-out infinite;
+}
+
+.statusDot.playing {
+  background: #06b6d4;
+  box-shadow: 0 0 8px #06b6d4;
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
