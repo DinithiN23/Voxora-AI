@@ -7,6 +7,8 @@ import { useConversationStore } from "@/stores/conversationStore";
 import { useAuthStore } from "@/stores/authStore";
 import MarkdownRenderer from "@/components/chat/MarkdownRenderer";
 import VisualizationViewer from "@/components/visualizations/VisualizationViewer";
+import VoiceOverlay from "@/components/voice/VoiceOverlay";
+import { useVoice } from "@/hooks/useVoice";
 import type { ConversationDetail, Visualization } from "@/types/api";
 import styles from "./ask.module.css";
 
@@ -34,15 +36,24 @@ function AskContent() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isListening, setIsListening] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(urlConvId);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
-  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<any>(null);
+  const sendMessageRef = useRef<(text: string, mode?: "text" | "voice") => Promise<void>>(
+    async () => {}
+  );
+
+  // Phase 3: Advanced Voice Experience with Barge-in and Web Audio Analyser
+  const voice = useVoice({
+    onTranscriptComplete: (finalText) => {
+      if (finalText.trim()) {
+        sendMessageRef.current(finalText, "voice");
+      }
+    },
+  });
 
   const scrollToBottom = useCallback(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -99,77 +110,25 @@ function AskContent() {
     };
   }, [urlConvId, setActiveConversationId]);
 
-  // Handle Speech Recognition
-  const toggleVoice = () => {
-    if (isListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-      setIsListening(false);
-      return;
+  // Voice controls
+  const toggleVoice = useCallback(() => {
+    if (voice.isListening) {
+      voice.stopListening();
+    } else {
+      voice.startListening((finalText) => {
+        if (finalText.trim()) {
+          sendMessageRef.current(finalText, "voice");
+        }
+      });
     }
+  }, [voice]);
 
-    const SpeechRec =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-    if (SpeechRec) {
-      try {
-        const recognition = new SpeechRec();
-        recognitionRef.current = recognition;
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = "en-US";
-
-        recognition.onstart = () => setIsListening(true);
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript;
-          if (transcript) {
-            setInput(transcript);
-            sendMessage(transcript, "voice");
-          }
-          setIsListening(false);
-        };
-        recognition.onerror = () => setIsListening(false);
-        recognition.onend = () => setIsListening(false);
-
-        recognition.start();
-        return;
-      } catch (e) {
-        console.warn("Speech recognition error:", e);
-      }
-    }
-
-    // Demo simulation fallback
-    setIsListening(true);
-    setTimeout(() => {
-      setIsListening(false);
-      sendMessage("What were our top 3 products by revenue?", "voice");
-    }, 2000);
-  };
-
-  // Text-to-speech
-  const handleSpeak = (text: string, id: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-
-    if (speakingMsgId === id) {
-      window.speechSynthesis.cancel();
-      setSpeakingMsgId(null);
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-    const cleanText = text
-      .replace(/[*_#`~|]/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.rate = 1.05;
-    utterance.onend = () => setSpeakingMsgId(null);
-    utterance.onerror = () => setSpeakingMsgId(null);
-
-    setSpeakingMsgId(id);
-    window.speechSynthesis.speak(utterance);
-  };
+  const handleSpeak = useCallback(
+    (text: string, id: string) => {
+      voice.speak(text, id);
+    },
+    [voice]
+  );
 
   // Copy message
   const handleCopy = (text: string, id: string) => {
@@ -182,6 +141,7 @@ function AskContent() {
   const sendMessage = useCallback(
     async (text: string, mode: "text" | "voice" = "text") => {
       if (!text.trim() || isTyping) return;
+      voice.stopListening();
 
       const userText = text.trim();
       const userMsgId = crypto.randomUUID();
@@ -367,6 +327,10 @@ function AskContent() {
     ]
   );
 
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendMessage(input);
@@ -399,14 +363,14 @@ function AskContent() {
           <div className={styles.voiceSection}>
             <button
               type="button"
-              className={`${styles.voiceBtn} ${isListening ? styles.listening : ""}`}
+              className={`${styles.voiceBtn} ${voice.isListening ? styles.listening : ""}`}
               onClick={toggleVoice}
-              title={isListening ? "Listening... click to stop" : "Ask by voice"}
+              title={voice.isListening ? "Listening... click to stop" : "Ask by voice"}
             >
               🎙️
             </button>
             <span className={styles.voiceLabel}>
-              {isListening ? "Listening... speak now" : "Ask by voice"}
+              {voice.isListening ? "Listening... speak now" : "Ask by voice"}
             </span>
           </div>
 
@@ -471,11 +435,21 @@ function AskContent() {
                         </button>
                         <button
                           type="button"
-                          className={styles.actionBtn}
+                          className={`${styles.actionBtn} ${
+                            voice.isSpeaking && voice.speakingId === msg.id
+                              ? styles.speakingActive
+                              : ""
+                          }`}
                           onClick={() => handleSpeak(msg.content, msg.id)}
-                          title={speakingMsgId === msg.id ? "Stop voice" : "Read aloud"}
+                          title={
+                            voice.isSpeaking && voice.speakingId === msg.id
+                              ? "Stop reading aloud"
+                              : "Read aloud"
+                          }
                         >
-                          {speakingMsgId === msg.id ? "⏹ Stop" : "🔊 Listen"}
+                          {voice.isSpeaking && voice.speakingId === msg.id
+                            ? "⏹ Stop"
+                            : "🔊 Listen"}
                         </button>
                       </div>
                     )}
@@ -521,6 +495,30 @@ function AskContent() {
         </div>
       )}
 
+      {/* ── Real-time Voice Experience Overlay ──────────── */}
+      <VoiceOverlay
+        isListening={voice.isListening}
+        isSpeaking={voice.isSpeaking}
+        transcript={voice.transcript}
+        interimTranscript={voice.interimTranscript}
+        analyser={voice.analyser}
+        onCancel={() => voice.stopListening()}
+        onSend={() => {
+          const text = voice.interimTranscript || voice.transcript;
+          voice.stopListening();
+          if (text.trim()) {
+            sendMessage(text, "voice");
+          }
+        }}
+        onBargeIn={() => {
+          voice.bargeIn((finalText) => {
+            if (finalText.trim()) {
+              sendMessage(finalText, "voice");
+            }
+          });
+        }}
+      />
+
       {/* ── Input Bar ──────────────────────────────────────── */}
       <div className={styles.inputArea}>
         <form className={styles.inputBar} onSubmit={handleSubmit}>
@@ -535,9 +533,9 @@ function AskContent() {
           />
           <button
             type="button"
-            className={`${styles.inputVoiceBtn} ${isListening ? styles.active : ""}`}
+            className={`${styles.inputVoiceBtn} ${voice.isListening ? styles.active : ""}`}
             onClick={toggleVoice}
-            title="Ask with voice"
+            title={voice.isListening ? "Listening... click to stop" : "Ask with voice"}
           >
             🎙️
           </button>

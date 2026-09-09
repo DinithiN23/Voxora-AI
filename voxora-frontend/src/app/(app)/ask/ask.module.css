@@ -275,6 +275,24 @@
   border-color: rgba(255, 255, 255, 0.15);
 }
 
+.actionBtn.speakingActive {
+  background: rgba(6, 182, 212, 0.15);
+  border-color: rgba(6, 182, 212, 0.4);
+  color: #38bdf8;
+  font-weight: 600;
+  box-shadow: 0 0 10px rgba(6, 182, 212, 0.2);
+  animation: pulseSpeaking 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseSpeaking {
+  0%, 100% {
+    border-color: rgba(6, 182, 212, 0.4);
+  }
+  50% {
+    border-color: rgba(6, 182, 212, 0.9);
+  }
+}
+
 /* ── Voice Indicator ───────────────────────────────────────── */
 
 .voiceIndicator {
