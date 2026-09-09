@@ -1,0 +1,50 @@
+.comingSoon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  text-align: center;
+  padding: var(--vx-space-2xl);
+  animation: vx-fade-in-up var(--vx-duration-slow) var(--vx-ease);
+}
+
+.comingSoonIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: var(--vx-radius-lg);
+  background: var(--vx-brand-gradient-subtle);
+  border: 1px solid var(--vx-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--vx-text-3xl);
+  margin-bottom: var(--vx-space-lg);
+}
+
+.comingSoonTitle {
+  font-size: var(--vx-text-2xl);
+  font-weight: 700;
+  margin-bottom: var(--vx-space-sm);
+}
+
+.comingSoonDesc {
+  font-size: var(--vx-text-base);
+  color: var(--vx-text-secondary);
+  max-width: 400px;
+  line-height: 1.7;
+}
+
+.comingSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vx-space-xs);
+  padding: 6px 16px;
+  background: var(--vx-brand-gradient-subtle);
+  border: 1px solid rgba(108, 92, 231, 0.2);
+  border-radius: var(--vx-radius-full);
+  font-size: var(--vx-text-xs);
+  font-weight: 600;
+  color: var(--vx-brand-primary-light);
+  margin-top: var(--vx-space-lg);
+}

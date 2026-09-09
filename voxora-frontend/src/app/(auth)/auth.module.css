@@ -1,0 +1,386 @@
+.authLayout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--vx-bg-primary);
+}
+
+/* ── Left Panel — Branding ─────────────────────────────────── */
+
+.brandPanel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--vx-space-3xl);
+  background: var(--vx-bg-secondary);
+  position: relative;
+  overflow: hidden;
+}
+
+.brandPanel::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -20%;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(108, 92, 231, 0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brandPanel::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -10%;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 210, 255, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.brandContent {
+  position: relative;
+  z-index: 1;
+  max-width: 480px;
+  text-align: center;
+}
+
+.logoMark {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--vx-radius-lg);
+  background: var(--vx-brand-gradient);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--vx-space-lg);
+  font-size: var(--vx-text-2xl);
+  font-weight: 800;
+  color: white;
+  box-shadow: var(--vx-glow-primary);
+}
+
+.brandTitle {
+  font-size: var(--vx-text-4xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--vx-space-md);
+  background: var(--vx-brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.brandTagline {
+  font-size: var(--vx-text-lg);
+  color: var(--vx-text-secondary);
+  line-height: 1.7;
+  margin-bottom: var(--vx-space-2xl);
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-md);
+  text-align: left;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-md);
+  padding: var(--vx-space-md);
+  border-radius: var(--vx-radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--vx-border);
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+}
+
+.feature:hover {
+  background: rgba(108, 92, 231, 0.06);
+  border-color: rgba(108, 92, 231, 0.2);
+}
+
+.featureIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--vx-radius-sm);
+  background: var(--vx-brand-gradient-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--vx-text-xl);
+  flex-shrink: 0;
+}
+
+.featureText h4 {
+  font-size: var(--vx-text-sm);
+  font-weight: 600;
+  color: var(--vx-text-primary);
+  margin-bottom: 2px;
+}
+
+.featureText p {
+  font-size: var(--vx-text-xs);
+  color: var(--vx-text-muted);
+}
+
+/* ── Right Panel — Form ────────────────────────────────────── */
+
+.formPanel {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--vx-space-2xl);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 440px;
+  animation: vx-fade-in-up var(--vx-duration-slow) var(--vx-ease);
+}
+
+.formHeader {
+  margin-bottom: var(--vx-space-xl);
+}
+
+.formTitle {
+  font-size: var(--vx-text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--vx-space-sm);
+}
+
+.formSubtitle {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-secondary);
+}
+
+.formSubtitle a {
+  font-weight: 600;
+}
+
+/* ── Form Inputs ───────────────────────────────────────────── */
+
+.formGroup {
+  margin-bottom: var(--vx-space-lg);
+}
+
+.label {
+  display: block;
+  font-size: var(--vx-text-sm);
+  font-weight: 500;
+  color: var(--vx-text-secondary);
+  margin-bottom: var(--vx-space-sm);
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: var(--vx-space-md);
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-lg);
+  pointer-events: none;
+  transition: color var(--vx-duration-fast) var(--vx-ease);
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px 14px 48px;
+  background: var(--vx-bg-input);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-text-primary);
+  font-size: var(--vx-text-base);
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+}
+
+.input::placeholder {
+  color: var(--vx-text-muted);
+}
+
+.input:focus {
+  border-color: var(--vx-border-focus);
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.15);
+  background: var(--vx-bg-tertiary);
+}
+
+.input:focus ~ .inputIcon,
+.input:focus + .inputIcon {
+  color: var(--vx-brand-primary-light);
+}
+
+.passwordToggle {
+  position: absolute;
+  right: var(--vx-space-md);
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-lg);
+  cursor: pointer;
+  padding: var(--vx-space-xs);
+  transition: color var(--vx-duration-fast) var(--vx-ease);
+}
+
+.passwordToggle:hover {
+  color: var(--vx-text-secondary);
+}
+
+/* ── Submit Button ─────────────────────────────────────────── */
+
+.submitBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--vx-brand-gradient);
+  border-radius: var(--vx-radius-md);
+  color: white;
+  font-size: var(--vx-text-base);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+}
+
+.submitBtn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--vx-brand-gradient-hover);
+  opacity: 0;
+  transition: opacity var(--vx-duration-normal) var(--vx-ease);
+}
+
+.submitBtn:hover::before {
+  opacity: 1;
+}
+
+.submitBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--vx-glow-primary), var(--vx-shadow-lg);
+}
+
+.submitBtn:active {
+  transform: translateY(0);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.submitBtn span {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vx-space-sm);
+}
+
+/* ── Loading Spinner ───────────────────────────────────────── */
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: vx-spin 0.6s linear infinite;
+}
+
+/* ── Error Message ─────────────────────────────────────────── */
+
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+  padding: var(--vx-space-md);
+  background: var(--vx-error-soft);
+  border: 1px solid rgba(255, 82, 82, 0.2);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-error);
+  font-size: var(--vx-text-sm);
+  margin-bottom: var(--vx-space-lg);
+  animation: vx-fade-in-down var(--vx-duration-normal) var(--vx-ease);
+}
+
+/* ── Divider ───────────────────────────────────────────────── */
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-md);
+  margin: var(--vx-space-xl) 0;
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-sm);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--vx-border);
+}
+
+/* ── Social Buttons ────────────────────────────────────────── */
+
+.socialButtons {
+  display: flex;
+  gap: var(--vx-space-md);
+}
+
+.socialBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vx-space-sm);
+  padding: 12px;
+  background: var(--vx-bg-input);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-text-secondary);
+  font-size: var(--vx-text-sm);
+  font-weight: 500;
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+}
+
+.socialBtn:hover {
+  background: var(--vx-bg-tertiary);
+  border-color: var(--vx-border-light);
+  color: var(--vx-text-primary);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 968px) {
+  .brandPanel {
+    display: none;
+  }
+
+  .formPanel {
+    padding: var(--vx-space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .formContainer {
+    max-width: 100%;
+  }
+
+  .socialButtons {
+    flex-direction: column;
+  }
+}
