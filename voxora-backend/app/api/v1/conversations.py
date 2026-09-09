@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import TokenPayload, get_current_user
 from app.db.session import async_session_factory, get_db
-from app.models.conversation import Conversation, Message
+from app.models.conversation import Conversation, Message, QueryLog, Visualization
 from app.schemas.conversation import (
     AskResponse,
     ConversationDetailResponse,
@@ -26,7 +26,11 @@ from app.schemas.conversation import (
     UpdateConversationRequest,
     VisualizationResponse,
 )
+from app.integrations.bigquery.client import bigquery_client
+from app.services.ai_analyst import ai_analyst_service
 from app.services.llm_service import llm_service
+from app.services.text_to_sql import text_to_sql_engine
+from app.services.visualization_service import visualization_service
 
 logger = logging.getLogger(__name__)
 
@@ -304,17 +308,55 @@ async def send_message_stream(
                     if m.role in ("user", "assistant")
                 ]
 
-                # 4. Stream LLM tokens
+                # 4. Text-to-SQL & BigQuery Analytical Pipeline
                 collected_chunks: list[str] = []
-                try:
-                    async for chunk in llm_service.stream_response(chat_history):
-                        collected_chunks.append(chunk)
-                        yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
-                except Exception as stream_err:
-                    logger.error("Streaming error: %s", stream_err)
-                    fallback_chunk = _generate_placeholder_response(request.content)
-                    collected_chunks.append(fallback_chunk)
-                    yield f"data: {json.dumps({'type': 'token', 'token': fallback_chunk})}\n\n"
+                active_viz_config: dict | None = None
+                executed_sql: str | None = None
+                query_res: dict | None = None
+
+                # Detect if question is likely requesting business analytics
+                is_analytics_query = any(k in request.content.lower() for k in (
+                    "revenue", "sale", "order", "product", "customer", "region", "profit",
+                    "margin", "top", "trend", "compare", "month", "breakdown", "performance",
+                    "channel", "growth", "kpi", "metric", "cost", "average", "highest", "lowest"
+                ))
+
+                if is_analytics_query:
+                    try:
+                        executed_sql = await text_to_sql_engine.generate_sql(request.content, chat_history)
+                        query_res = await bigquery_client.execute_query(executed_sql)
+
+                        # Check for recommended chart
+                        active_viz_config = visualization_service.recommend_visualization(
+                            request.content, executed_sql, query_res
+                        )
+
+                        # Emit visualization event before streaming text
+                        if active_viz_config:
+                            yield f"data: {json.dumps({'type': 'visualization', 'visualization': active_viz_config})}\n\n"
+
+                        # Stream executive commentary based on real BigQuery data
+                        async for chunk in ai_analyst_service.stream_analysis(
+                            request.content, executed_sql, query_res, chat_history
+                        ):
+                            collected_chunks.append(chunk)
+                            yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+
+                    except Exception as bq_err:
+                        logger.warning("BigQuery pipeline fallback (%s). Using LLM service directly.", bq_err)
+                        active_viz_config = None
+
+                # Fallback to direct conversational response if not an analytics query or if BQ failed
+                if not collected_chunks:
+                    try:
+                        async for chunk in llm_service.stream_response(chat_history):
+                            collected_chunks.append(chunk)
+                            yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
+                    except Exception as stream_err:
+                        logger.error("Streaming error: %s", stream_err)
+                        fallback_chunk = _generate_placeholder_response(request.content)
+                        collected_chunks.append(fallback_chunk)
+                        yield f"data: {json.dumps({'type': 'token', 'token': fallback_chunk})}\n\n"
 
                 full_content = "".join(collected_chunks).strip()
 
@@ -328,6 +370,40 @@ async def send_message_stream(
                 db.add(ai_msg)
                 await db.commit()
                 await db.refresh(ai_msg)
+
+                # Persist Visualization to DB if generated
+                if active_viz_config:
+                    try:
+                        viz_record = Visualization(
+                            message_id=ai_msg.id,
+                            chart_type=active_viz_config.get("chart_type", "bar"),
+                            title=active_viz_config.get("title"),
+                            chart_config=active_viz_config.get("chart_config", {}),
+                            data_payload=active_viz_config.get("data_payload", {}),
+                        )
+                        db.add(viz_record)
+                        await db.commit()
+                    except Exception as viz_err:
+                        logger.error("Failed to persist visualization: %s", viz_err)
+
+                # Persist QueryLog to DB if SQL executed
+                if executed_sql and query_res:
+                    try:
+                        query_log = QueryLog(
+                            message_id=ai_msg.id,
+                            generated_sql=executed_sql,
+                            execution_time_ms=query_res.get("execution_time_ms"),
+                            rows_returned=query_res.get("row_count"),
+                            status="success",
+                            bigquery_job_info={
+                                "job_id": query_res.get("job_id"),
+                                "bytes_billed": query_res.get("bytes_billed"),
+                            },
+                        )
+                        db.add(query_log)
+                        await db.commit()
+                    except Exception as log_err:
+                        logger.error("Failed to persist query log: %s", log_err)
 
                 # 6. Generate smart follow-up suggestions
                 suggestions = await llm_service.generate_suggestions(request.content, full_content)
