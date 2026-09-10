@@ -1,0 +1,531 @@
+/* ══════════════════════════════════════════════════════════════
+   VOXORA AI — Executive Dashboard Styles
+   Premium dark glassmorphic dashboard with KPI cards, grid layout,
+   and smooth micro-animations.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Page Layout ──────────────────────────────────────────── */
+
+.dashboardPage {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  padding: var(--vx-space-xl) var(--vx-space-2xl);
+  gap: var(--vx-space-xl);
+  animation: vx-fade-in 0.4s ease;
+  max-width: 1400px;
+}
+
+/* ── Dashboard Header ─────────────────────────────────────── */
+
+.dashboardHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--vx-space-lg);
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-xs);
+}
+
+.pageTitle {
+  font-size: var(--vx-text-3xl);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: var(--vx-brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pageSubtitle {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-muted);
+  font-weight: 400;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-md);
+  flex-shrink: 0;
+}
+
+.lastUpdated {
+  font-size: 11px;
+  color: var(--vx-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vx-success);
+  animation: vx-pulse-glow 2s infinite;
+  box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+}
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+  padding: 8px 16px;
+  background: var(--vx-bg-glass);
+  backdrop-filter: var(--vx-glass-blur);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-md);
+  color: var(--vx-text-secondary);
+  font-size: var(--vx-text-xs);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--vx-duration-fast) var(--vx-ease);
+}
+
+.refreshBtn:hover {
+  background: rgba(108, 92, 231, 0.15);
+  border-color: var(--vx-border-focus);
+  color: var(--vx-text-primary);
+}
+
+.refreshBtn:active {
+  transform: scale(0.97);
+}
+
+.refreshIcon {
+  font-size: 14px;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.refreshBtn:hover .refreshIcon {
+  transform: rotate(180deg);
+}
+
+.refreshSpinning {
+  animation: vx-spin 0.8s linear infinite;
+}
+
+/* ── KPI Grid ─────────────────────────────────────────────── */
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--vx-space-md);
+}
+
+.kpiCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-md);
+  padding: var(--vx-space-lg) var(--vx-space-xl);
+  background: var(--vx-bg-glass);
+  backdrop-filter: var(--vx-glass-blur);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-lg);
+  overflow: hidden;
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+  animation: vx-fade-in-up 0.5s ease both;
+}
+
+.kpiCard:nth-child(1) { animation-delay: 0.05s; }
+.kpiCard:nth-child(2) { animation-delay: 0.1s; }
+.kpiCard:nth-child(3) { animation-delay: 0.15s; }
+.kpiCard:nth-child(4) { animation-delay: 0.2s; }
+.kpiCard:nth-child(5) { animation-delay: 0.25s; }
+
+.kpiCard:hover {
+  border-color: var(--vx-border-light);
+  transform: translateY(-2px);
+  box-shadow: var(--vx-shadow-md);
+}
+
+.kpiGlow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: var(--vx-radius-lg) var(--vx-radius-lg) 0 0;
+  opacity: 0.8;
+}
+
+.kpiTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpiIconWrapper {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--vx-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.kpiTrend {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: var(--vx-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.kpiTrendUp {
+  background: var(--vx-success-soft);
+  color: var(--vx-success);
+}
+
+.kpiTrendDown {
+  background: var(--vx-error-soft);
+  color: var(--vx-error);
+}
+
+.kpiTrendNeutral {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--vx-text-muted);
+}
+
+.kpiBottom {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpiValue {
+  font-size: var(--vx-text-2xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--vx-text-primary);
+  font-family: var(--vx-font-mono);
+}
+
+.kpiLabel {
+  font-size: var(--vx-text-xs);
+  color: var(--vx-text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ── Charts Grid ──────────────────────────────────────────── */
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--vx-space-lg);
+}
+
+.chartCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--vx-bg-glass);
+  backdrop-filter: var(--vx-glass-blur);
+  border: 1px solid var(--vx-border);
+  border-radius: var(--vx-radius-lg);
+  overflow: hidden;
+  transition: all var(--vx-duration-normal) var(--vx-ease);
+  animation: vx-fade-in-up 0.6s ease both;
+}
+
+.chartCard:nth-child(1) { animation-delay: 0.1s; }
+.chartCard:nth-child(2) { animation-delay: 0.15s; }
+.chartCard:nth-child(3) { animation-delay: 0.2s; }
+.chartCard:nth-child(4) { animation-delay: 0.25s; }
+.chartCard:nth-child(5) { animation-delay: 0.3s; }
+
+.chartCardWide {
+  grid-column: 1 / -1;
+}
+
+.chartCard:hover {
+  border-color: var(--vx-border-light);
+  box-shadow: var(--vx-shadow-md);
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--vx-space-lg) var(--vx-space-xl) 0;
+}
+
+.chartTitle {
+  font-size: var(--vx-text-sm);
+  font-weight: 600;
+  color: var(--vx-text-primary);
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+}
+
+.chartBadge {
+  padding: 2px 10px;
+  background: var(--vx-brand-gradient-subtle);
+  border-radius: var(--vx-radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--vx-brand-primary-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.chartBody {
+  padding: var(--vx-space-md) var(--vx-space-lg) var(--vx-space-lg);
+  flex: 1;
+  min-height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Recharts Custom Tooltip ──────────────────────────────── */
+
+.customTooltip {
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--vx-radius-sm);
+  padding: 10px 14px;
+  box-shadow: var(--vx-shadow-lg);
+}
+
+.tooltipLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--vx-text-primary);
+  margin-bottom: 6px;
+}
+
+.tooltipItem {
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 0;
+}
+
+.tooltipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Loading States ───────────────────────────────────────── */
+
+.loadingState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--vx-space-lg);
+  animation: vx-fade-in 0.3s ease;
+}
+
+.loadingOrb {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--vx-brand-gradient);
+  animation: vx-pulse-glow 2s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.loadingText {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-muted);
+  font-weight: 500;
+}
+
+.loadingSubtext {
+  font-size: var(--vx-text-xs);
+  color: var(--vx-text-muted);
+  opacity: 0.6;
+}
+
+/* ── Error State ──────────────────────────────────────────── */
+
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--vx-space-lg);
+  animation: vx-fade-in 0.3s ease;
+}
+
+.errorIcon {
+  font-size: 48px;
+}
+
+.errorTitle {
+  font-size: var(--vx-text-lg);
+  font-weight: 700;
+  color: var(--vx-text-primary);
+}
+
+.errorMessage {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-muted);
+  text-align: center;
+  max-width: 400px;
+}
+
+.retryBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--vx-space-sm);
+  padding: 10px 24px;
+  background: var(--vx-brand-gradient);
+  border-radius: var(--vx-radius-md);
+  color: white;
+  font-size: var(--vx-text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--vx-duration-fast) var(--vx-ease);
+}
+
+.retryBtn:hover {
+  box-shadow: var(--vx-glow-primary);
+  transform: translateY(-1px);
+}
+
+/* ── Skeleton Loaders ─────────────────────────────────────── */
+
+.skeletonKpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--vx-space-md);
+}
+
+.skeletonKpi {
+  height: 130px;
+  background: linear-gradient(
+    90deg,
+    var(--vx-bg-tertiary) 25%,
+    var(--vx-bg-elevated) 50%,
+    var(--vx-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: vx-shimmer 1.5s infinite ease-in-out;
+  border-radius: var(--vx-radius-lg);
+  border: 1px solid var(--vx-border);
+}
+
+.skeletonChartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--vx-space-lg);
+}
+
+.skeletonChart {
+  height: 340px;
+  background: linear-gradient(
+    90deg,
+    var(--vx-bg-tertiary) 25%,
+    var(--vx-bg-elevated) 50%,
+    var(--vx-bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: vx-shimmer 1.5s infinite ease-in-out;
+  border-radius: var(--vx-radius-lg);
+  border: 1px solid var(--vx-border);
+}
+
+.skeletonChartWide {
+  grid-column: 1 / -1;
+}
+
+/* ── Empty Chart State ────────────────────────────────────── */
+
+.emptyChart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vx-space-sm);
+  color: var(--vx-text-muted);
+  font-size: var(--vx-text-sm);
+  padding: var(--vx-space-2xl);
+}
+
+.emptyChartIcon {
+  font-size: 32px;
+  opacity: 0.4;
+}
+
+/* ── Data Range Pill ──────────────────────────────────────── */
+
+.dataRangePill {
+  padding: 4px 12px;
+  background: var(--vx-brand-gradient-subtle);
+  border-radius: var(--vx-radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--vx-brand-primary-light);
+}
+
+/* ── Responsive ───────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .chartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .chartCardWide {
+    grid-column: 1;
+  }
+
+  .skeletonChartsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .skeletonChartWide {
+    grid-column: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardPage {
+    padding: var(--vx-space-md);
+    gap: var(--vx-space-md);
+  }
+
+  .kpiGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboardHeader {
+    flex-direction: column;
+  }
+
+  .pageTitle {
+    font-size: var(--vx-text-2xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .kpiGrid {
+    grid-template-columns: 1fr;
+  }
+}
