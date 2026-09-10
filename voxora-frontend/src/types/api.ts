@@ -67,3 +67,65 @@ export interface AskResponse {
   suggestions: string[];
   voice_url: string | null;
 }
+
+export interface GlossaryItem {
+  term: string;
+  definition: string;
+}
+
+export interface AgentConfig {
+  id: string;
+  tenant_id: string;
+  name: string;
+  avatar: string;
+  role_title: string;
+  description: string;
+  tone: "executive" | "analytical" | "strategic" | "technical" | string;
+  temperature: number;
+  system_prompt: string;
+  greeting_message: string;
+  fallback_message: string;
+  voice_id: string;
+  voice_speed: number;
+  voice_pitch: number;
+  allowed_data_areas: string[];
+  data_access_rules: {
+    mask_pii?: boolean;
+    read_only?: boolean;
+    auto_visualize?: boolean;
+    allow_sql_generation?: boolean;
+    [key: string]: unknown;
+  };
+  knowledge_glossary: GlossaryItem[];
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentPreset {
+  id: string;
+  name: string;
+  avatar: string;
+  role_title: string;
+  description: string;
+  tone: string;
+  temperature: number;
+  system_prompt: string;
+  greeting_message: string;
+  fallback_message: string;
+  voice_id: string;
+  voice_speed: number;
+  voice_pitch: number;
+  allowed_data_areas: string[];
+  data_access_rules: Record<string, unknown>;
+  knowledge_glossary: GlossaryItem[];
+}
+
+export interface AgentTestResponse {
+  response: string;
+  persona_applied: string;
+  tone_applied: string;
+  model_used: string;
+  latency_ms: number;
+}
+

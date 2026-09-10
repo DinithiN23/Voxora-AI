@@ -34,6 +34,7 @@ class AIAnalystService:
         sql: str,
         query_result: dict[str, Any],
         chat_history: list[dict[str, str]] | None = None,
+        system_prompt: str | None = None,
     ) -> AsyncGenerator[str, None]:
         """Stream executive analysis for a completed BigQuery query."""
         rows_sample = query_result.get("rows", [])[:20]
@@ -51,7 +52,8 @@ class AIAnalystService:
             {"role": "user", "content": prompt}
         ]
 
-        async for chunk in llm_service.stream_response(messages, system_prompt=ANALYST_SYSTEM_PROMPT):
+        active_prompt = system_prompt or ANALYST_SYSTEM_PROMPT
+        async for chunk in llm_service.stream_response(messages, system_prompt=active_prompt):
             yield chunk
 
 

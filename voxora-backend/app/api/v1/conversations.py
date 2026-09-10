@@ -27,6 +27,7 @@ from app.schemas.conversation import (
     VisualizationResponse,
 )
 from app.integrations.bigquery.client import bigquery_client
+from app.services.agent_service import agent_studio_service
 from app.services.ai_analyst import ai_analyst_service
 from app.services.llm_service import llm_service
 from app.services.text_to_sql import text_to_sql_engine
@@ -213,9 +214,11 @@ async def send_message(
     if not conversation.title or conversation.title == "New Conversation":
         conversation.title = request.content[:60]
 
-    # Call AI Engine (Gemini with Groq fallback)
+    # Call AI Engine with tenant agent configuration
     try:
-        ai_response_text = await llm_service.generate_response(chat_history)
+        agent_cfg = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
+        effective_prompt = agent_studio_service.build_effective_system_prompt(agent_cfg)
+        ai_response_text = await llm_service.generate_response(chat_history, system_prompt=effective_prompt)
     except Exception:
         ai_response_text = _generate_placeholder_response(request.content)
 
@@ -335,9 +338,16 @@ async def send_message_stream(
                         if active_viz_config:
                             yield f"data: {json.dumps({'type': 'visualization', 'visualization': active_viz_config})}\n\n"
 
+                        # Load tenant agent configuration for persona, tone, and glossary
+                        try:
+                            agent_cfg = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
+                            effective_prompt = agent_studio_service.build_effective_system_prompt(agent_cfg)
+                        except Exception:
+                            effective_prompt = None
+
                         # Stream executive commentary based on real BigQuery data
                         async for chunk in ai_analyst_service.stream_analysis(
-                            request.content, executed_sql, query_res, chat_history
+                            request.content, executed_sql, query_res, chat_history, system_prompt=effective_prompt
                         ):
                             collected_chunks.append(chunk)
                             yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
@@ -349,7 +359,13 @@ async def send_message_stream(
                 # Fallback to direct conversational response if not an analytics query or if BQ failed
                 if not collected_chunks:
                     try:
-                        async for chunk in llm_service.stream_response(chat_history):
+                        agent_cfg = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
+                        effective_prompt = agent_studio_service.build_effective_system_prompt(agent_cfg)
+                    except Exception:
+                        effective_prompt = None
+
+                    try:
+                        async for chunk in llm_service.stream_response(chat_history, system_prompt=effective_prompt):
                             collected_chunks.append(chunk)
                             yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
                     except Exception as stream_err:

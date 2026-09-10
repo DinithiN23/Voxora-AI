@@ -24,7 +24,7 @@ export default function Sidebar() {
   const navItems = [
     { href: "/ask", icon: "💬", label: "Ask Voxora", badge: null },
     { href: "/dashboards", icon: "📊", label: "Dashboards", badge: "Live" },
-    { href: "/studio", icon: "🤖", label: "Agent Studio", badge: "Soon" },
+    { href: "/studio", icon: "🤖", label: "Agent Studio", badge: "Live" },
   ];
 
   const handleNewChat = () => {

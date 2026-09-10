@@ -4,6 +4,7 @@ Voxora Backend — Model registry.
 Import all models here so Alembic and the app can discover them.
 """
 
+from app.models.agent import AgentConfig
 from app.models.base import Base
 from app.models.conversation import Conversation, Message, QueryLog, Visualization
 from app.models.role import BusinessArea, Permission, Role
@@ -21,4 +22,6 @@ __all__ = [
     "Message",
     "Visualization",
     "QueryLog",
+    "AgentConfig",
 ]
+

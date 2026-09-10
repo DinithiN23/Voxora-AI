@@ -45,6 +45,8 @@ class VoiceService:
         text: str,
         voice_name: str = "en-US-Journey-F",
         language_code: str = "en-US",
+        speaking_rate: float = 1.0,
+        pitch: float = 0.0,
     ) -> bytes | None:
         """Synthesize text into MP3 audio bytes using Google Cloud TTS."""
         client = self._get_tts_client()
@@ -60,7 +62,8 @@ class VoiceService:
                 )
                 audio_config = texttospeech.AudioConfig(
                     audio_encoding=texttospeech.AudioEncoding.MP3,
-                    speaking_rate=1.05,
+                    speaking_rate=speaking_rate,
+                    pitch=pitch,
                 )
                 response = client.synthesize_speech(
                     input=s_input,
