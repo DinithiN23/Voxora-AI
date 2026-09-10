@@ -1,7 +1,7 @@
 /* ══════════════════════════════════════════════════════════════
-   VOXORA AI — Executive Dashboard Styles
+   VOXORA AI — Multi-Dashboard Styles
    Premium dark glassmorphic dashboard with KPI cards, grid layout,
-   and smooth micro-animations.
+   tab switcher, and 2-year time range filtering.
    ══════════════════════════════════════════════════════════════ */
 
 /* ── Page Layout ──────────────────────────────────────────── */
@@ -11,9 +11,11 @@
   flex-direction: column;
   min-height: 100vh;
   padding: var(--vx-space-xl) var(--vx-space-2xl);
-  gap: var(--vx-space-xl);
+  gap: var(--vx-space-lg);
   animation: vx-fade-in 0.4s ease;
-  max-width: 1400px;
+  max-width: 1440px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* ── Dashboard Header ─────────────────────────────────────── */
@@ -29,14 +31,14 @@
 .headerLeft {
   display: flex;
   flex-direction: column;
-  gap: var(--vx-space-xs);
+  gap: 4px;
 }
 
 .pageTitle {
   font-size: var(--vx-text-3xl);
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: var(--vx-brand-gradient);
+  background: linear-gradient(135deg, #ffffff 30%, #a7f3d0 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -52,7 +54,7 @@
   display: flex;
   align-items: center;
   gap: var(--vx-space-md);
-  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .lastUpdated {
@@ -61,37 +63,47 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 5px 10px;
+  border-radius: var(--vx-radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .liveDot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--vx-success);
-  animation: vx-pulse-glow 2s infinite;
-  box-shadow: 0 0 8px rgba(0, 230, 118, 0.5);
+  background: #10b981;
+  animation: livePulse 2s infinite;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+@keyframes livePulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 12px rgba(16, 185, 129, 0.9); }
+  100% { transform: scale(0.95); opacity: 0.8; }
 }
 
 .refreshBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--vx-space-sm);
-  padding: 8px 16px;
-  background: var(--vx-bg-glass);
-  backdrop-filter: var(--vx-glass-blur);
-  border: 1px solid var(--vx-border);
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--vx-radius-md);
   color: var(--vx-text-secondary);
   font-size: var(--vx-text-xs);
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--vx-duration-fast) var(--vx-ease);
+  transition: all 0.2s ease;
 }
 
 .refreshBtn:hover {
-  background: rgba(108, 92, 231, 0.15);
-  border-color: var(--vx-border-focus);
-  color: var(--vx-text-primary);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #10b981;
 }
 
 .refreshBtn:active {
@@ -99,7 +111,7 @@
 }
 
 .refreshIcon {
-  font-size: 14px;
+  display: inline-block;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -108,7 +120,138 @@
 }
 
 .refreshSpinning {
-  animation: vx-spin 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Multi-Dashboard Controls Bar ────────────────────────── */
+
+.controlsBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vx-space-md);
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+}
+
+.tabGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(2, 6, 23, 0.6);
+  padding: 4px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.tabBtn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tabBtnActive {
+  background: rgba(16, 185, 129, 0.14) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  font-weight: 600;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.12);
+}
+
+.tabIcon {
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+}
+
+.tabBtnActive .tabIcon {
+  opacity: 1;
+  color: #10b981;
+}
+
+/* Time Range Filter */
+
+.timeRangeGroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(2, 6, 23, 0.6);
+  padding: 4px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.timeRangeLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+.timePill {
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.timePill:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.timePillActive {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* ── Content Container with transition ───────────────────── */
+
+.contentArea {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-lg);
+  transition: opacity 0.2s ease;
+}
+
+.contentAreaLoading {
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 /* ── KPI Grid ─────────────────────────────────────────────── */
@@ -123,27 +266,21 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 18px 22px;
-  background: var(--vx-bg-glass);
-  backdrop-filter: var(--vx-glass-blur);
-  border: 1px solid var(--vx-border);
-  border-radius: var(--vx-radius-lg);
+  gap: 12px;
+  padding: 20px 22px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
   overflow: hidden;
-  transition: all var(--vx-duration-normal) var(--vx-ease);
-  animation: vx-fade-in-up 0.5s ease both;
+  transition: all 0.25s ease;
+  animation: fadeInUp 0.4s ease both;
 }
 
-.kpiCard:nth-child(1) { animation-delay: 0.05s; }
-.kpiCard:nth-child(2) { animation-delay: 0.1s; }
-.kpiCard:nth-child(3) { animation-delay: 0.15s; }
-.kpiCard:nth-child(4) { animation-delay: 0.2s; }
-.kpiCard:nth-child(5) { animation-delay: 0.25s; }
-
 .kpiCard:hover {
-  border-color: var(--vx-border-light);
+  border-color: rgba(255, 255, 255, 0.14);
   transform: translateY(-2px);
-  box-shadow: var(--vx-shadow-md);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 .kpiGlow {
@@ -152,64 +289,60 @@
   left: 0;
   right: 0;
   height: 2px;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .kpiTop {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
 }
 
 .kpiLabel {
-  font-size: 11px;
-  color: var(--vx-text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
 }
 
 .kpiTrend {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--vx-radius-full);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
 }
 
 .kpiTrendUp {
-  background: var(--vx-success-soft);
-  color: var(--vx-success);
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
 }
 
 .kpiTrendDown {
-  background: var(--vx-error-soft);
-  color: var(--vx-error);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
 }
 
 .kpiTrendNeutral {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--vx-text-muted);
+  background: rgba(148, 163, 184, 0.1);
+  color: #94a3b8;
 }
 
 .kpiBottom {
   display: flex;
-  flex-direction: column;
+  align-items: baseline;
 }
 
 .kpiValue {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -0.02em;
-  color: var(--vx-text-primary);
-  font-variant-numeric: tabular-nums;
-  line-height: 1.1;
+  color: #f8fafc;
 }
 
-/* ── Charts Grid ──────────────────────────────────────────── */
+/* ── Charts Grid ─────────────────────────────────────────── */
 
 .chartsGrid {
   display: grid;
@@ -218,188 +351,60 @@
 }
 
 .chartCard {
-  position: relative;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
-  background: var(--vx-bg-glass);
-  backdrop-filter: var(--vx-glass-blur);
-  border: 1px solid var(--vx-border);
-  border-radius: var(--vx-radius-lg);
-  overflow: hidden;
-  transition: all var(--vx-duration-normal) var(--vx-ease);
-  animation: vx-fade-in-up 0.6s ease both;
-}
-
-.chartCard:nth-child(1) { animation-delay: 0.1s; }
-.chartCard:nth-child(2) { animation-delay: 0.15s; }
-.chartCard:nth-child(3) { animation-delay: 0.2s; }
-.chartCard:nth-child(4) { animation-delay: 0.25s; }
-.chartCard:nth-child(5) { animation-delay: 0.3s; }
-
-.chartCardWide {
-  grid-column: 1 / -1;
+  gap: 16px;
+  transition: all 0.25s ease;
+  min-height: 360px;
 }
 
 .chartCard:hover {
-  border-color: var(--vx-border-light);
-  box-shadow: var(--vx-shadow-md);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+.chartCardWide {
+  grid-column: 1 / -1;
+  min-height: 380px;
 }
 
 .chartHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--vx-space-lg) var(--vx-space-xl) 0;
 }
 
 .chartTitle {
-  font-size: var(--vx-text-sm);
+  font-size: 15px;
   font-weight: 600;
-  color: var(--vx-text-primary);
-  display: flex;
-  align-items: center;
-  gap: var(--vx-space-sm);
+  color: #e2e8f0;
+  letter-spacing: -0.01em;
 }
 
 .chartBadge {
-  padding: 2px 10px;
-  background: var(--vx-brand-gradient-subtle);
-  border-radius: var(--vx-radius-full);
-  font-size: 10px;
-  font-weight: 600;
-  color: var(--vx-brand-primary-light);
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #94a3b8;
 }
 
 .chartBody {
-  padding: var(--vx-space-md) var(--vx-space-lg) var(--vx-space-lg);
   flex: 1;
+  width: 100%;
+  height: 100%;
   min-height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-/* ── Recharts Custom Tooltip ──────────────────────────────── */
-
-.customTooltip {
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--vx-radius-sm);
-  padding: 10px 14px;
-  box-shadow: var(--vx-shadow-lg);
-}
-
-.tooltipLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--vx-text-primary);
-  margin-bottom: 6px;
-}
-
-.tooltipItem {
-  font-size: 11px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 1px 0;
-}
-
-.tooltipDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* ── Loading States ───────────────────────────────────────── */
-
-.loadingState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: var(--vx-space-lg);
-  animation: vx-fade-in 0.3s ease;
-}
-
-.loadingOrb {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--vx-brand-gradient);
-  animation: vx-pulse-glow 2s infinite;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 28px;
-}
-
-.loadingText {
-  font-size: var(--vx-text-sm);
-  color: var(--vx-text-muted);
-  font-weight: 500;
-}
-
-.loadingSubtext {
-  font-size: var(--vx-text-xs);
-  color: var(--vx-text-muted);
-  opacity: 0.6;
-}
-
-/* ── Error State ──────────────────────────────────────────── */
-
-.errorState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: var(--vx-space-lg);
-  animation: vx-fade-in 0.3s ease;
-}
-
-.errorIcon {
-  font-size: 48px;
-}
-
-.errorTitle {
-  font-size: var(--vx-text-lg);
-  font-weight: 700;
-  color: var(--vx-text-primary);
-}
-
-.errorMessage {
-  font-size: var(--vx-text-sm);
-  color: var(--vx-text-muted);
-  text-align: center;
-  max-width: 400px;
-}
-
-.retryBtn {
-  display: flex;
-  align-items: center;
-  gap: var(--vx-space-sm);
-  padding: 10px 24px;
-  background: var(--vx-brand-gradient);
-  border-radius: var(--vx-radius-md);
-  color: white;
-  font-size: var(--vx-text-sm);
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--vx-duration-fast) var(--vx-ease);
-}
-
-.retryBtn:hover {
-  box-shadow: var(--vx-glow-primary);
-  transform: translateY(-1px);
-}
-
-/* ── Skeleton Loaders ─────────────────────────────────────── */
+/* ── Skeletons ───────────────────────────────────────────── */
 
 .skeletonKpiGrid {
   display: grid;
@@ -408,17 +413,10 @@
 }
 
 .skeletonKpi {
-  height: 130px;
-  background: linear-gradient(
-    90deg,
-    var(--vx-bg-tertiary) 25%,
-    var(--vx-bg-elevated) 50%,
-    var(--vx-bg-tertiary) 75%
-  );
-  background-size: 200% 100%;
-  animation: vx-shimmer 1.5s infinite ease-in-out;
-  border-radius: var(--vx-radius-lg);
-  border: 1px solid var(--vx-border);
+  height: 98px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  animation: pulseSkeleton 1.5s infinite ease-in-out;
 }
 
 .skeletonChartsGrid {
@@ -428,67 +426,87 @@
 }
 
 .skeletonChart {
-  height: 340px;
-  background: linear-gradient(
-    90deg,
-    var(--vx-bg-tertiary) 25%,
-    var(--vx-bg-elevated) 50%,
-    var(--vx-bg-tertiary) 75%
-  );
-  background-size: 200% 100%;
-  animation: vx-shimmer 1.5s infinite ease-in-out;
-  border-radius: var(--vx-radius-lg);
-  border: 1px solid var(--vx-border);
+  height: 360px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  animation: pulseSkeleton 1.5s infinite ease-in-out;
 }
 
 .skeletonChartWide {
   grid-column: 1 / -1;
+  height: 380px;
 }
 
-/* ── Empty Chart State ────────────────────────────────────── */
+@keyframes pulseSkeleton {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
 
-.emptyChart {
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Error & Retry ───────────────────────────────────────── */
+
+.errorState {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--vx-space-sm);
-  color: var(--vx-text-muted);
-  font-size: var(--vx-text-sm);
-  padding: var(--vx-space-2xl);
+  padding: 60px 20px;
+  text-align: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 14px;
 }
 
-.emptyChartIcon {
-  font-size: 32px;
-  opacity: 0.4;
+.errorTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f87171;
 }
 
-/* ── Data Range Pill ──────────────────────────────────────── */
-
-.dataRangePill {
-  padding: 4px 12px;
-  background: var(--vx-brand-gradient-subtle);
-  border-radius: var(--vx-radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--vx-brand-primary-light);
+.errorMessage {
+  font-size: 13px;
+  color: #94a3b8;
+  max-width: 480px;
 }
 
-/* ── Responsive ───────────────────────────────────────────── */
+.retryBtn {
+  margin-top: 8px;
+  padding: 8px 20px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
 
-@media (max-width: 1200px) {
-  .chartsGrid {
-    grid-template-columns: 1fr;
-  }
+.retryBtn:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+}
 
-  .chartCardWide {
-    grid-column: 1;
-  }
+/* ── Responsive ──────────────────────────────────────────── */
 
+@media (max-width: 1100px) {
+  .chartsGrid,
   .skeletonChartsGrid {
     grid-template-columns: 1fr;
   }
-
+  .chartCardWide,
   .skeletonChartWide {
     grid-column: 1;
   }
@@ -499,22 +517,15 @@
     padding: var(--vx-space-md);
     gap: var(--vx-space-md);
   }
-
-  .kpiGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dashboardHeader {
+  .controlsBar {
     flex-direction: column;
+    align-items: stretch;
   }
-
+  .tabGroup,
+  .timeRangeGroup {
+    overflow-x: auto;
+  }
   .pageTitle {
-    font-size: var(--vx-text-2xl);
-  }
-}
-
-@media (max-width: 480px) {
-  .kpiGrid {
-    grid-template-columns: 1fr;
+    font-size: 24px;
   }
 }
