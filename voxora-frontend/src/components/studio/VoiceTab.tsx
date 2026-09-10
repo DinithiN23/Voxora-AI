@@ -49,7 +49,7 @@ export default function VoiceTab() {
 
   return (
     <div>
-      <h2 className={styles.panelTitle}>🎙️ Voice & Speech Synthesis</h2>
+      <h2 className={styles.panelTitle}>Voice & Speech Synthesis</h2>
       <p className={styles.panelDescription}>
         Configure Google Cloud Neural2 / Journey TTS speech acoustics, cadence, and pitch for real-time voice mode.
       </p>
@@ -78,7 +78,16 @@ export default function VoiceTab() {
                   previewVoice();
                 }}
               >
-                {isPlayingVoice && draft.voice_id === voice.id ? "⏸" : "▶"}
+                {isPlayingVoice && draft.voice_id === voice.id ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" />
+                    <rect x="14" y="4" width="4" height="16" />
+                  </svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                )}
               </button>
             </div>
           ))}
@@ -143,7 +152,7 @@ export default function VoiceTab() {
           onClick={() => previewVoice()}
           disabled={isPlayingVoice}
         >
-          {isPlayingVoice ? "🔊 Playing Audio..." : "▶ Test Audio Synthesis"}
+          {isPlayingVoice ? "Playing Audio..." : "Test Audio Synthesis"}
         </button>
       </div>
     </div>

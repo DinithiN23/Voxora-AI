@@ -13,21 +13,6 @@ import { useDashboardStore } from "@/stores/dashboardStore";
 import DashboardChart from "@/components/dashboard/DashboardChart";
 import styles from "./dashboards.module.css";
 
-/* ── Chart type icon mapping ──────────────────────────────── */
-
-function getChartIcon(type: string): string {
-  switch (type) {
-    case "area":
-    case "line":
-      return "📈";
-    case "pie":
-      return "🥧";
-    case "bar":
-      return "📊";
-    default:
-      return "📊";
-  }
-}
 
 /* ── Format last-updated timestamp ────────────────────────── */
 
@@ -115,15 +100,24 @@ export default function DashboardsPage() {
     return (
       <div className={styles.dashboardPage}>
         <div className={styles.errorState}>
-          <span className={styles.errorIcon}>⚠️</span>
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" style={{ marginBottom: "0.5rem" }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
           <h2 className={styles.errorTitle}>Dashboard Unavailable</h2>
           <p className={styles.errorMessage}>{error}</p>
           <button
             type="button"
             className={styles.retryBtn}
             onClick={refreshDashboard}
+            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
           >
-            🔄 Retry
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M23 4v6h-6M1 20v-6h6" />
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+            <span>Retry</span>
           </button>
         </div>
       </div>
@@ -178,14 +172,14 @@ export default function DashboardsPage() {
       <div className={styles.kpiGrid}>
         {kpis.map((kpi) => (
           <div key={kpi.id} className={styles.kpiCard}>
-            {/* Top glow bar */}
+            {/* Top accent line */}
             <div
               className={styles.kpiGlow}
               style={{ background: kpi.color }}
             />
 
             <div className={styles.kpiTop}>
-              <div className={styles.kpiIconWrapper}>{kpi.icon}</div>
+              <span className={styles.kpiLabel}>{kpi.label}</span>
               <span
                 className={`${styles.kpiTrend} ${getTrendClass(kpi.trend)}`}
               >
@@ -195,7 +189,6 @@ export default function DashboardsPage() {
 
             <div className={styles.kpiBottom}>
               <span className={styles.kpiValue}>{kpi.formatted_value}</span>
-              <span className={styles.kpiLabel}>{kpi.label}</span>
             </div>
           </div>
         ))}
@@ -216,8 +209,7 @@ export default function DashboardsPage() {
             >
               <div className={styles.chartHeader}>
                 <span className={styles.chartTitle}>
-                  <span>{getChartIcon(chart.chart_type)}</span>
-                  <span>{chart.title}</span>
+                  {chart.title}
                 </span>
                 <span className={styles.chartBadge}>{chart.chart_type}</span>
               </div>

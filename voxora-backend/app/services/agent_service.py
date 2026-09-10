@@ -63,7 +63,7 @@ PRESETS: list[dict[str, Any]] = [
     {
         "id": "executive-c-suite",
         "name": "Voxora Executive Copilot",
-        "avatar": "🤖",
+        "avatar": "VX",
         "role_title": "Chief Analytics Officer",
         "description": "Strategic C-suite intelligence advisor synthesizing metrics into decisive executive briefings.",
         "tone": "executive",
@@ -81,7 +81,7 @@ PRESETS: list[dict[str, Any]] = [
     {
         "id": "financial-sleuth",
         "name": "Financial Sleuth & SQL Auditor",
-        "avatar": "📈",
+        "avatar": "FA",
         "role_title": "Principal Financial Analyst",
         "description": "Granular financial analyst specializing in variance analysis, unit economics, and margin attribution.",
         "tone": "analytical",
@@ -109,7 +109,7 @@ Avoid fluff; prioritize statistical precision.""",
     {
         "id": "growth-strategist",
         "name": "Growth & Market Strategist",
-        "avatar": "⚡",
+        "avatar": "GS",
         "role_title": "VP of Revenue & Strategy",
         "description": "Forward-looking strategic advisor connecting data insights to market expansion and growth opportunities.",
         "tone": "strategic",
@@ -135,7 +135,7 @@ For every metric discussed:
     {
         "id": "technical-sql-specialist",
         "name": "Data Engineering Copilot",
-        "avatar": "💻",
+        "avatar": "DE",
         "role_title": "Lead Data Architect",
         "description": "Technical data specialist providing exact BigQuery SQL syntax, schema mappings, and query optimization tips.",
         "tone": "technical",

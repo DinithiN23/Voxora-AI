@@ -337,10 +337,10 @@ function AskContent() {
   };
 
   const defaultSuggestions = [
-    { icon: "🏆", text: "What were our top 3 products by revenue?" },
-    { icon: "🌍", text: "Show revenue breakdown by region" },
-    { icon: "📈", text: "How is daily revenue trending?" },
-    { icon: "💰", text: "What is our overall profit margin %?" },
+    { text: "What were our top 3 products by revenue?" },
+    { text: "Show revenue breakdown by region" },
+    { text: "How is daily revenue trending?" },
+    { text: "What is our overall profit margin %?" },
   ];
 
   const hasMessages = messages.length > 0;
@@ -351,7 +351,11 @@ function AskContent() {
       {!hasMessages ? (
         /* ── Welcome / Empty State ──────────────────────── */
         <div className={styles.welcomeContainer}>
-          <div className={styles.welcomeOrb}>✨</div>
+          <div className={styles.welcomeOrb}>
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
           <h1 className={styles.welcomeTitle}>
             Good afternoon, <span className="vx-gradient-text">{greetingName}</span>
           </h1>
@@ -367,7 +371,12 @@ function AskContent() {
               onClick={toggleVoice}
               title={voice.isListening ? "Listening... click to stop" : "Ask by voice"}
             >
-              🎙️
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
             </button>
             <span className={styles.voiceLabel}>
               {voice.isListening ? "Listening... speak now" : "Ask by voice"}
@@ -382,8 +391,11 @@ function AskContent() {
                 type="button"
                 className={styles.suggestionCard}
                 onClick={() => sendMessage(s.text)}
+                style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}
               >
-                <span className={styles.suggestionIcon}>{s.icon}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--vx-brand-primary, #10b981)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
                 <span>{s.text}</span>
               </button>
             ))}
@@ -398,7 +410,13 @@ function AskContent() {
                 <div className={styles.userMessage}>
                   <div className={styles.userBubble}>
                     {msg.inputMode === "voice" && (
-                      <div className={styles.voiceIndicator}>🎙️ Voice Query</div>
+                      <div className={styles.voiceIndicator}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        </svg>
+                        <span>Voice Query</span>
+                      </div>
                     )}
                     {msg.content}
                   </div>
@@ -431,7 +449,17 @@ function AskContent() {
                           onClick={() => handleCopy(msg.content, msg.id)}
                           title="Copy answer"
                         >
-                          {copiedMsgId === msg.id ? "✓ Copied" : "📋 Copy"}
+                          {copiedMsgId === msg.id ? (
+                            <span>✓ Copied</span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                              </svg>
+                              <span>Copy</span>
+                            </span>
+                          )}
                         </button>
                         <button
                           type="button"
@@ -447,9 +475,22 @@ function AskContent() {
                               : "Read aloud"
                           }
                         >
-                          {voice.isSpeaking && voice.speakingId === msg.id
-                            ? "⏹ Stop"
-                            : "🔊 Listen"}
+                          {voice.isSpeaking && voice.speakingId === msg.id ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="6" width="12" height="12"/>
+                              </svg>
+                              <span>Stop</span>
+                            </span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                              </svg>
+                              <span>Listen</span>
+                            </span>
+                          )}
                         </button>
                       </div>
                     )}
@@ -537,7 +578,12 @@ function AskContent() {
             onClick={toggleVoice}
             title={voice.isListening ? "Listening... click to stop" : "Ask with voice"}
           >
-            🎙️
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
           </button>
           <button
             type="submit"
@@ -545,7 +591,10 @@ function AskContent() {
             disabled={!input.trim() || isTyping}
             title="Send query"
           >
-            ➤
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
           </button>
         </form>
         <p className={styles.inputHint}>

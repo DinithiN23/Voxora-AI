@@ -17,7 +17,7 @@ export default function PromptTab() {
 
   return (
     <div>
-      <h2 className={styles.panelTitle}>📜 System Prompt & Guardrails</h2>
+      <h2 className={styles.panelTitle}>System Prompt & Guardrails</h2>
       <p className={styles.panelDescription}>
         Configure the core foundational instructions, welcome greetings, and boundary guardrails executed by the LLM.
       </p>

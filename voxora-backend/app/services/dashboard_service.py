@@ -83,8 +83,8 @@ class DashboardService:
                     "value": revenue,
                     "formatted_value": self._format_currency(revenue),
                     "trend": "up",
-                    "icon": "💰",
-                    "color": "#6C5CE7",
+                    "icon": "",
+                    "color": "#10B981",
                 },
                 {
                     "id": "kpi-profit",
@@ -92,8 +92,8 @@ class DashboardService:
                     "value": profit,
                     "formatted_value": self._format_currency(profit),
                     "trend": "up",
-                    "icon": "📈",
-                    "color": "#00E676",
+                    "icon": "",
+                    "color": "#059669",
                 },
                 {
                     "id": "kpi-orders",
@@ -101,8 +101,8 @@ class DashboardService:
                     "value": orders,
                     "formatted_value": f"{orders:,}",
                     "trend": "up",
-                    "icon": "🛒",
-                    "color": "#00D2FF",
+                    "icon": "",
+                    "color": "#6366F1",
                 },
                 {
                     "id": "kpi-aov",
@@ -110,8 +110,8 @@ class DashboardService:
                     "value": aov,
                     "formatted_value": self._format_currency(aov),
                     "trend": "neutral",
-                    "icon": "🎯",
-                    "color": "#F59E0B",
+                    "icon": "",
+                    "color": "#0EA5E9",
                 },
                 {
                     "id": "kpi-margin",
@@ -119,8 +119,8 @@ class DashboardService:
                     "value": margin,
                     "formatted_value": f"{margin:.1f}%",
                     "trend": "up" if margin > 50 else "neutral",
-                    "icon": "⚡",
-                    "color": "#EC4899",
+                    "icon": "",
+                    "color": "#10B981",
                 },
             ]
         except Exception as e:
@@ -151,7 +151,7 @@ class DashboardService:
                     "y_keys": ["revenue", "profit"],
                     "x_label": "Month",
                     "y_label": "Amount (USD)",
-                    "colors": ["#6C5CE7", "#00E676"],
+                    "colors": ["#10B981", "#6366F1"],
                 },
                 "data_payload": {"rows": result.get("rows", [])},
             }

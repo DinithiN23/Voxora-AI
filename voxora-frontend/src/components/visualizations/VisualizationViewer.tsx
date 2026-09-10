@@ -19,13 +19,13 @@ import {
 import styles from "./VisualizationViewer.module.css";
 
 const PALETTE = [
-  "#8b5cf6", // Primary Purple
-  "#38bdf8", // Sky Blue
-  "#10b981", // Emerald
-  "#f59e0b", // Amber
-  "#ec4899", // Pink
+  "#10b981", // Primary Emerald
   "#6366f1", // Indigo
-  "#14b8a6", // Teal
+  "#38bdf8", // Sky Blue
+  "#34d399", // Mint
+  "#f59e0b", // Amber
+  "#06b6d4", // Cyan
+  "#8b5cf6", // Violet
 ];
 
 function formatCurrencyOrNumber(val: any): string {
@@ -67,7 +67,6 @@ export default function VisualizationViewer({ viz }: VisualizationViewerProps) {
       <div className={styles.vizCard}>
         <div className={styles.vizHeader}>
           <span className={styles.vizTitle}>
-            <span>📊</span>
             <span>{String(title || config.primary_label || "Key Metric")}</span>
           </span>
           <span className={styles.vizBadge}>KPI Summary</span>
@@ -103,7 +102,6 @@ export default function VisualizationViewer({ viz }: VisualizationViewerProps) {
     <div className={styles.vizCard}>
       <div className={styles.vizHeader}>
         <span className={styles.vizTitle}>
-          <span>{chart_type === "line" ? "📈" : chart_type === "pie" ? "🥧" : "📊"}</span>
           <span>{title || "Data Visualization"}</span>
         </span>
         <span className={styles.vizBadge}>{chart_type}</span>

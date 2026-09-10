@@ -8,55 +8,55 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 
 :root {
-  /* Brand */
-  --vx-brand-primary: #6C5CE7;
-  --vx-brand-primary-light: #A29BFE;
-  --vx-brand-primary-dark: #4834D4;
-  --vx-brand-secondary: #00D2FF;
-  --vx-brand-secondary-light: #74E0FF;
-  --vx-brand-gradient: linear-gradient(135deg, #6C5CE7 0%, #00D2FF 100%);
-  --vx-brand-gradient-hover: linear-gradient(135deg, #7B6FF0 0%, #33DCFF 100%);
-  --vx-brand-gradient-subtle: linear-gradient(135deg, rgba(108, 92, 231, 0.15) 0%, rgba(0, 210, 255, 0.08) 100%);
+  /* Brand (Palette A: Obsidian & Emerald Slate) */
+  --vx-brand-primary: #10B981;
+  --vx-brand-primary-light: #34D399;
+  --vx-brand-primary-dark: #059669;
+  --vx-brand-secondary: #6366F1;
+  --vx-brand-secondary-light: #818CF8;
+  --vx-brand-gradient: linear-gradient(135deg, #10B981 0%, #6366F1 100%);
+  --vx-brand-gradient-hover: linear-gradient(135deg, #34D399 0%, #818CF8 100%);
+  --vx-brand-gradient-subtle: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
 
   /* Surfaces */
-  --vx-bg-primary: #0A0A0F;
-  --vx-bg-secondary: #12121A;
-  --vx-bg-tertiary: #1A1A26;
-  --vx-bg-elevated: #22222E;
-  --vx-bg-glass: rgba(18, 18, 26, 0.72);
-  --vx-bg-glass-light: rgba(26, 26, 38, 0.6);
-  --vx-bg-input: rgba(26, 26, 38, 0.8);
+  --vx-bg-primary: #090D16;
+  --vx-bg-secondary: #0F172A;
+  --vx-bg-tertiary: #1E293B;
+  --vx-bg-elevated: #1E293B;
+  --vx-bg-glass: rgba(15, 23, 42, 0.78);
+  --vx-bg-glass-light: rgba(30, 41, 59, 0.65);
+  --vx-bg-input: rgba(15, 23, 42, 0.85);
 
   /* Text */
-  --vx-text-primary: #F0F0F5;
-  --vx-text-secondary: #8888A0;
-  --vx-text-muted: #55556A;
-  --vx-text-inverse: #0A0A0F;
-  --vx-text-brand: #A29BFE;
+  --vx-text-primary: #F8FAFC;
+  --vx-text-secondary: #94A3B8;
+  --vx-text-muted: #64748B;
+  --vx-text-inverse: #090D16;
+  --vx-text-brand: #34D399;
 
   /* Semantic Colors */
-  --vx-success: #00E676;
-  --vx-success-soft: rgba(0, 230, 118, 0.12);
-  --vx-warning: #FFC107;
-  --vx-warning-soft: rgba(255, 193, 7, 0.12);
-  --vx-error: #FF5252;
-  --vx-error-soft: rgba(255, 82, 82, 0.12);
-  --vx-info: #448AFF;
-  --vx-info-soft: rgba(68, 138, 255, 0.12);
+  --vx-success: #10B981;
+  --vx-success-soft: rgba(16, 185, 129, 0.12);
+  --vx-warning: #F59E0B;
+  --vx-warning-soft: rgba(245, 158, 11, 0.12);
+  --vx-error: #EF4444;
+  --vx-error-soft: rgba(239, 68, 68, 0.12);
+  --vx-info: #0EA5E9;
+  --vx-info-soft: rgba(14, 165, 233, 0.12);
 
   /* Borders */
-  --vx-border: rgba(255, 255, 255, 0.06);
-  --vx-border-light: rgba(255, 255, 255, 0.1);
-  --vx-border-focus: rgba(108, 92, 231, 0.5);
+  --vx-border: rgba(255, 255, 255, 0.07);
+  --vx-border-light: rgba(255, 255, 255, 0.12);
+  --vx-border-focus: rgba(16, 185, 129, 0.45);
 
   /* Shadows & Effects */
   --vx-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
   --vx-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
   --vx-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
   --vx-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --vx-glow-primary: 0 0 20px rgba(108, 92, 231, 0.3);
-  --vx-glow-secondary: 0 0 20px rgba(0, 210, 255, 0.2);
-  --vx-glow-success: 0 0 20px rgba(0, 230, 118, 0.2);
+  --vx-glow-primary: 0 0 20px rgba(16, 185, 129, 0.25);
+  --vx-glow-secondary: 0 0 20px rgba(99, 102, 241, 0.2);
+  --vx-glow-success: 0 0 20px rgba(16, 185, 129, 0.2);
   --vx-glass-blur: blur(20px);
 
   /* Spacing */
