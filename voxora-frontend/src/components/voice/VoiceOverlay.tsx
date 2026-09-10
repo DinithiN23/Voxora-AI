@@ -39,8 +39,11 @@ export default function VoiceOverlay({
             </span>
           ) : (
             <span className={styles.bargeInBadge}>
-              <span>🔊</span>
-              Voxora Assistant Speaking
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+              <span>Voxora Assistant Speaking</span>
             </span>
           )}
 
@@ -51,7 +54,11 @@ export default function VoiceOverlay({
               onClick={onBargeIn}
               title="Interrupt and speak now"
             >
-              🎙️ Barge-in / Interrupt
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+              </svg>
+              <span>Barge-in / Interrupt</span>
             </button>
           )}
         </div>
@@ -98,8 +105,13 @@ export default function VoiceOverlay({
               className={styles.btnSend}
               onClick={onSend}
               disabled={!currentDisplay.trim()}
+              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
             >
-              Send Query ➤
+              <span>Send Query</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
             </button>
           </div>
         )}

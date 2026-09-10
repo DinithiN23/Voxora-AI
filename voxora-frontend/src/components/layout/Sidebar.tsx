@@ -22,9 +22,47 @@ export default function Sidebar() {
   }, [fetchConversations]);
 
   const navItems = [
-    { href: "/ask", icon: "💬", label: "Ask Voxora", badge: null },
-    { href: "/dashboards", icon: "📊", label: "Dashboards", badge: "Live" },
-    { href: "/studio", icon: "🤖", label: "Agent Studio", badge: "Live" },
+    {
+      href: "/ask",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+      ),
+      label: "Ask Voxora",
+      badge: null,
+    },
+    {
+      href: "/dashboards",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect width="7" height="9" x="3" y="3" rx="1" />
+          <rect width="7" height="5" x="14" y="3" rx="1" />
+          <rect width="7" height="9" x="14" y="12" rx="1" />
+          <rect width="7" height="5" x="3" y="16" rx="1" />
+        </svg>
+      ),
+      label: "Dashboards",
+      badge: "Live",
+    },
+    {
+      href: "/studio",
+      icon: (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="4" y1="21" x2="4" y2="14" />
+          <line x1="4" y1="10" x2="4" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="12" />
+          <line x1="12" y1="8" x2="12" y2="3" />
+          <line x1="20" y1="21" x2="20" y2="16" />
+          <line x1="20" y1="12" x2="20" y2="3" />
+          <line x1="1" y1="14" x2="7" y2="14" />
+          <line x1="9" y1="8" x2="15" y2="8" />
+          <line x1="17" y1="16" x2="23" y2="16" />
+        </svg>
+      ),
+      label: "Agent Studio",
+      badge: "Live",
+    },
   ];
 
   const handleNewChat = () => {
@@ -61,7 +99,10 @@ export default function Sidebar() {
       <nav className={styles.nav}>
         {/* ── New Conversation Button ─────────────────────── */}
         <button type="button" onClick={handleNewChat} className={styles.newChatBtn}>
-          <span>✨</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>New Conversation</span>
         </button>
 

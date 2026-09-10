@@ -21,14 +21,14 @@
 }
 
 .voiceCard {
-  background: rgba(18, 16, 38, 0.88);
+  background: rgba(15, 23, 42, 0.92);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(139, 92, 246, 0.35);
+  border: 1px solid rgba(16, 185, 129, 0.3);
   border-radius: var(--vx-radius-xl);
   padding: var(--vx-space-md) var(--vx-space-lg);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5),
-              0 0 24px rgba(108, 92, 231, 0.25),
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6),
+              0 0 24px rgba(16, 185, 129, 0.2),
               inset 0 1px 1px rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
@@ -51,7 +51,7 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #c084fc;
+  color: #34d399;
 }
 
 .pulseMic {

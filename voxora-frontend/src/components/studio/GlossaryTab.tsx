@@ -65,7 +65,7 @@ export default function GlossaryTab() {
     <div>
       <div className={styles.glossaryControls}>
         <div>
-          <h2 className={styles.panelTitle}>📚 Knowledge Base & Business Glossary</h2>
+          <h2 className={styles.panelTitle}>Knowledge Base & Business Glossary</h2>
           <p className={styles.panelDescription} style={{ marginBottom: 0 }}>
             Define custom organizational formulas, KPI calculation rules, and company acronyms. Voxora injects these into every answer.
           </p>
@@ -75,7 +75,7 @@ export default function GlossaryTab() {
           className={`${styles.actionBtn} ${styles.btnSecondary}`}
           onClick={handleImportRecommended}
         >
-          ✨ Import Recommended Metrics
+          Import Recommended Metrics
         </button>
       </div>
 
@@ -118,7 +118,11 @@ export default function GlossaryTab() {
               onClick={() => removeGlossaryItem(idx)}
               title="Remove term"
             >
-              🗑️
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              </svg>
             </button>
           </div>
         ))}

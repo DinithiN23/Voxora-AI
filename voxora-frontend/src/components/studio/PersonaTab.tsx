@@ -4,27 +4,27 @@ import React from "react";
 import { useAgentStudioStore } from "@/stores/agentStudioStore";
 import styles from "@/app/(app)/studio/studio.module.css";
 
-const AVATAR_CHOICES = ["🤖", "👔", "⚡", "🎯", "🧠", "💼", "📈", "🏛️", "💻", "💎"];
+const AVATAR_CHOICES = ["VX", "AI", "CA", "BI", "FA", "VP", "DE", "EX", "OP", "IQ"];
 
 const TONE_OPTIONS = [
   {
     id: "executive",
-    title: "👔 Executive & Decisive",
+    title: "Executive & Decisive",
     description: "Leads with bottom-line revenue/profit conclusions in bold. Sharp, brief, C-suite orientation.",
   },
   {
     id: "analytical",
-    title: "🔬 Deep Analytical",
+    title: "Deep Analytical",
     description: "Detailed variance analysis, basis points, margin breakdown, risk attribution, and precision.",
   },
   {
     id: "strategic",
-    title: "⚡ Strategic & Growth",
+    title: "Strategic & Growth",
     description: "Focuses on market opportunities, growth vectors, customer expansion, and ROI recommendations.",
   },
   {
     id: "technical",
-    title: "💻 Data Engineering & SQL",
+    title: "Data Engineering & SQL",
     description: "Provides BigQuery SQL queries, schema mappings, table partitioning, and query optimization.",
   },
 ];
@@ -36,23 +36,24 @@ export default function PersonaTab() {
 
   return (
     <div>
-      <h2 className={styles.panelTitle}>🎭 Persona & Identity</h2>
+      <h2 className={styles.panelTitle}>Persona & Identity</h2>
       <p className={styles.panelDescription}>
-        Configure how Voxora presents itself to your executive team. Select its avatar, title, decision tone, and reasoning temperature.
+        Configure how Voxora presents itself to your executive team. Select its avatar monogram, title, decision tone, and reasoning temperature.
       </p>
 
       {/* Avatar Picker */}
       <div className={styles.formGroup}>
-        <label className={styles.formLabel}>Agent Avatar</label>
+        <label className={styles.formLabel}>Agent Monogram</label>
         <div className={styles.avatarRow}>
-          {AVATAR_CHOICES.map((emoji) => (
+          {AVATAR_CHOICES.map((choice) => (
             <button
-              key={emoji}
+              key={choice}
               type="button"
-              className={`${styles.avatarOption} ${draft.avatar === emoji ? styles.avatarSelected : ""}`}
-              onClick={() => updateDraft({ avatar: emoji })}
+              className={`${styles.avatarOption} ${draft.avatar === choice ? styles.avatarSelected : ""}`}
+              onClick={() => updateDraft({ avatar: choice })}
+              style={{ fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.05em" }}
             >
-              {emoji}
+              {choice}
             </button>
           ))}
         </div>

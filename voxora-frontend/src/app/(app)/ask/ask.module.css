@@ -73,13 +73,13 @@
 }
 
 .voiceBtn:hover {
-  background: rgba(108, 92, 231, 0.15);
-  border-color: rgba(108, 92, 231, 0.3);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
   transform: scale(1.05);
 }
 
 .voiceBtn.listening {
-  background: rgba(108, 92, 231, 0.2);
+  background: rgba(16, 185, 129, 0.2);
   border-color: var(--vx-brand-primary);
   animation: vx-pulse-glow 1.5s ease-in-out infinite;
 }
@@ -129,8 +129,8 @@
 }
 
 .suggestionCard:hover {
-  background: rgba(108, 92, 231, 0.08);
-  border-color: rgba(108, 92, 231, 0.2);
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
   color: var(--vx-text-primary);
   transform: translateY(-2px);
   box-shadow: var(--vx-shadow-md);
@@ -300,7 +300,7 @@
   align-items: center;
   gap: var(--vx-space-xs);
   padding: 2px 10px;
-  background: rgba(108, 92, 231, 0.1);
+  background: rgba(16, 185, 129, 0.1);
   border-radius: var(--vx-radius-full);
   font-size: 11px;
   color: var(--vx-brand-primary-light);
@@ -369,8 +369,8 @@
 }
 
 .followUpChip:hover {
-  background: rgba(108, 92, 231, 0.1);
-  border-color: rgba(108, 92, 231, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
   color: var(--vx-text-primary);
 }
 
@@ -397,7 +397,7 @@
 
 .inputBar:focus-within {
   border-color: var(--vx-border-focus);
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .textInput {
@@ -429,12 +429,12 @@
 }
 
 .inputVoiceBtn:hover {
-  background: rgba(108, 92, 231, 0.1);
-  border-color: rgba(108, 92, 231, 0.3);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .inputVoiceBtn.active {
-  background: rgba(108, 92, 231, 0.2);
+  background: rgba(16, 185, 129, 0.2);
   border-color: var(--vx-brand-primary);
   animation: vx-pulse-glow 1.5s ease-in-out infinite;
 }

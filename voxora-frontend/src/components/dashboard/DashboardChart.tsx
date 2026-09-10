@@ -28,13 +28,13 @@ import {
 import styles from "./DashboardChart.module.css";
 
 const PALETTE = [
-  "#8b5cf6", // Purple
-  "#38bdf8", // Sky Blue
-  "#10b981", // Emerald
+  "#10b981", // Emerald (Primary)
+  "#6366f1", // Indigo (Secondary)
+  "#0ea5e9", // Sky Blue
   "#f59e0b", // Amber
-  "#ec4899", // Pink
-  "#6366f1", // Indigo
   "#14b8a6", // Teal
+  "#8b5cf6", // Violet
+  "#f43f5e", // Rose
 ];
 
 function formatValue(val: any): string {
@@ -88,7 +88,11 @@ export default function DashboardChart({
   if (!rows.length) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}>📭</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: 0.5 }}>
+          <line x1="18" y1="20" x2="18" y2="10" />
+          <line x1="12" y1="20" x2="12" y2="4" />
+          <line x1="6" y1="20" x2="6" y2="14" />
+        </svg>
         <span>No data available</span>
       </div>
     );

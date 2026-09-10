@@ -63,7 +63,7 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
     {
       id: "initial-assistant-greeting",
       role: "assistant",
-      content: "👋 Greetings! I am your Voxora Executive Copilot running in the Agent Studio Test Bench. Ask me any analytical, financial, or business question to evaluate my persona and tone.",
+      content: "Greetings! I am your Voxora Executive Copilot running in the Agent Studio Test Bench. Ask me any analytical, financial, or business question to evaluate my persona and tone.",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ],
@@ -188,7 +188,7 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
         isSaving: false,
         statusMessage: {
           type: "success",
-          text: `🎉 Successfully published '${updated.name}' configuration across Voxora AI!`,
+          text: `Successfully published '${updated.name}' configuration across Voxora AI!`,
         },
       });
     } catch (err) {
@@ -273,7 +273,7 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
       const errorMsg: SandboxChatMessage = {
         id: `msg-err-${Date.now()}`,
         role: "assistant",
-        content: `⚠️ Sandbox response error: ${err instanceof Error ? err.message : "Unknown test bench error"}`,
+        content: `Sandbox response error: ${err instanceof Error ? err.message : "Unknown test bench error"}`,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
       set((state) => ({

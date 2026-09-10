@@ -42,7 +42,7 @@ export default function TestBenchTab() {
     <div>
       <div className={styles.glossaryControls}>
         <div>
-          <h2 className={styles.panelTitle}>🧪 Interactive Agent Test Bench</h2>
+          <h2 className={styles.panelTitle}>Interactive Agent Test Bench</h2>
           <p className={styles.panelDescription} style={{ marginBottom: 0 }}>
             Test and evaluate your draft persona, tone ({draft.tone}), system prompt, and glossary definitions in real-time before publishing.
           </p>
@@ -51,8 +51,13 @@ export default function TestBenchTab() {
           type="button"
           className={`${styles.actionBtn} ${styles.btnSecondary}`}
           onClick={clearSandboxChat}
+          style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
         >
-          🔄 Refresh Test Session
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M23 4v6h-6M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+          </svg>
+          <span>Reset Session</span>
         </button>
       </div>
 
@@ -60,14 +65,27 @@ export default function TestBenchTab() {
         {/* Sandbox Header */}
         <div className={styles.sandboxHeader}>
           <div className={styles.sandboxTitle}>
-            <span>{draft.avatar}</span>
+            <span style={{ 
+              display: "inline-flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              width: "22px", 
+              height: "22px", 
+              borderRadius: "4px", 
+              background: "rgba(16, 185, 129, 0.15)", 
+              color: "var(--vx-brand-primary, #10b981)",
+              fontSize: "0.7rem",
+              fontWeight: 700
+            }}>
+              {draft.avatar.length <= 3 ? draft.avatar : draft.name.slice(0, 2).toUpperCase()}
+            </span>
             <span>{draft.name}</span>
             <span style={{ fontSize: "0.75rem", color: "#64748b" }}>•</span>
             <span style={{ color: "#a5b4fc", fontSize: "0.75rem", fontWeight: 600 }}>
               Tone: {draft.tone.toUpperCase()}
             </span>
             <span style={{ fontSize: "0.75rem", color: "#64748b" }}>•</span>
-            <span style={{ color: "#00e676", fontSize: "0.75rem" }}>Temp: {draft.temperature}</span>
+            <span style={{ color: "var(--vx-brand-primary, #10b981)", fontSize: "0.75rem" }}>Temp: {draft.temperature}</span>
           </div>
           <span style={{ fontSize: "0.75rem", color: "#94a3b8" }}>
             Draft Sandbox Environment
@@ -89,7 +107,7 @@ export default function TestBenchTab() {
                   {msg.latency_ms !== undefined && (
                     <>
                       <span>•</span>
-                      <span style={{ color: "#69f0ae" }}>⚡ {msg.latency_ms}ms</span>
+                      <span style={{ color: "var(--vx-brand-primary, #10b981)", fontWeight: 500 }}>{msg.latency_ms}ms</span>
                     </>
                   )}
                 </div>
