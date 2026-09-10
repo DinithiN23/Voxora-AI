@@ -6,10 +6,12 @@ system prompt, voice settings, glossary, and sandbox testing.
 """
 
 import logging
+from datetime import UTC, datetime
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import TokenPayload, get_current_user
+from app.core.security import TokenPayload, get_current_user, get_current_user_optional
 from app.db.session import get_db
 from app.schemas.agent import (
     AgentConfigResponse,
@@ -30,12 +32,39 @@ voice_service = VoiceService()
 
 @router.get("/agent", response_model=AgentConfigResponse)
 async def get_agent_config(
-    current_user: TokenPayload = Depends(get_current_user),
+    current_user: TokenPayload | None = Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
 ):
-    """Retrieve the current tenant's active agent configuration."""
-    config = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
-    return config
+    """Retrieve the current tenant's active agent configuration, or default preset if unauthenticated."""
+    if current_user:
+        config = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
+        return config
+
+    # Fallback to default preset in demo/guest mode
+    default_preset = agent_studio_service.get_presets()[0]
+    now = datetime.now(UTC)
+    return AgentConfigResponse(
+        id=UUID("00000000-0000-0000-0000-000000000000"),
+        tenant_id=UUID("00000000-0000-0000-0000-000000000000"),
+        name=default_preset.name,
+        avatar=default_preset.avatar,
+        role_title=default_preset.role_title,
+        description=default_preset.description,
+        tone=default_preset.tone,
+        temperature=default_preset.temperature,
+        system_prompt=default_preset.system_prompt,
+        greeting_message=default_preset.greeting_message,
+        fallback_message=default_preset.fallback_message,
+        voice_id=default_preset.voice_id,
+        voice_speed=default_preset.voice_speed,
+        voice_pitch=default_preset.voice_pitch,
+        allowed_data_areas=default_preset.allowed_data_areas,
+        data_access_rules=default_preset.data_access_rules,
+        knowledge_glossary=default_preset.knowledge_glossary,
+        is_active=True,
+        created_at=now,
+        updated_at=now,
+    )
 
 
 @router.put("/agent", response_model=AgentConfigResponse)
@@ -64,9 +93,7 @@ async def reset_agent_config(
 
 
 @router.get("/presets", response_model=list[AgentPreset])
-async def list_presets(
-    current_user: TokenPayload = Depends(get_current_user),
-):
+async def list_presets():
     """List available pre-configured agent persona templates."""
     return agent_studio_service.get_presets()
 
@@ -74,7 +101,6 @@ async def list_presets(
 @router.post("/test", response_model=AgentTestResponse)
 async def test_agent_sandbox(
     request: AgentTestRequest,
-    current_user: TokenPayload = Depends(get_current_user),
 ):
     """Test custom prompt, tone, and glossary rules in an isolated sandbox environment."""
     return await agent_studio_service.run_test_bench(request)

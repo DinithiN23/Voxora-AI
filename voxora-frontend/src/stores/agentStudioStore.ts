@@ -6,7 +6,7 @@
  */
 
 import { create } from "zustand";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type { AgentConfig, AgentPreset, AgentTestResponse, GlossaryItem } from "@/types/api";
 
 export interface SandboxChatMessage {
@@ -193,11 +193,14 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
       });
     } catch (err) {
       console.error("Save error:", err);
+      const isAuthErr = err instanceof ApiError && err.status === 401;
       set({
         isSaving: false,
         statusMessage: {
           type: "error",
-          text: err instanceof Error ? err.message : "Failed to save agent configuration.",
+          text: isAuthErr
+            ? "Sign in with admin@voxora.ai to publish agent configuration changes."
+            : err instanceof Error ? err.message : "Failed to save agent configuration.",
         },
       });
     }
@@ -219,11 +222,14 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
       });
     } catch (err) {
       console.error("Reset error:", err);
+      const isAuthErr = err instanceof ApiError && err.status === 401;
       set({
         isSaving: false,
         statusMessage: {
           type: "error",
-          text: "Failed to reset agent configuration.",
+          text: isAuthErr
+            ? "Sign in with admin@voxora.ai to reset agent configuration."
+            : "Failed to reset agent configuration.",
         },
       });
     }

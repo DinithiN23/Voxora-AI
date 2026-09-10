@@ -195,6 +195,28 @@ export default function LoginPage() {
                 {isLoading ? "Signing in..." : "Sign in"}
               </span>
             </button>
+
+            <div style={{ marginTop: "0.75rem", textAlign: "center" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail("admin@voxora.ai");
+                  setPassword("password123");
+                }}
+                style={{
+                  background: "rgba(16, 185, 129, 0.08)",
+                  border: "1px solid rgba(16, 185, 129, 0.25)",
+                  color: "var(--vx-brand-primary, #10b981)",
+                  padding: "6px 14px",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Demo Credentials: admin@voxora.ai (password123)
+              </button>
+            </div>
           </form>
 
           <div className={styles.divider}>or continue with</div>

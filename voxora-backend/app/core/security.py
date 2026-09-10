@@ -114,3 +114,19 @@ async def get_current_user(
         )
 
     return TokenPayload(payload)
+
+
+async def get_current_user_optional(
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    settings: Settings = Depends(get_settings),
+) -> TokenPayload | None:
+    """FastAPI dependency — extracts current user from JWT if present, else returns None."""
+    if credentials is None or not credentials.credentials:
+        return None
+    try:
+        payload = decode_token(credentials.credentials, settings)
+        if payload.get("type") != "access":
+            return None
+        return TokenPayload(payload)
+    except Exception:
+        return None
