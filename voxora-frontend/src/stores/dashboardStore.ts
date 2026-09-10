@@ -1,12 +1,12 @@
 /**
  * Voxora Dashboard Store.
  *
- * Zustand store for managing multi-dashboard state:
- * - Executive Overview
- * - Sales & Regional Performance
- * - Customer Intelligence & LTV
+ * State management for multi-page dashboards:
+ * - /dashboards/executive
+ * - /dashboards/sales
+ * - /dashboards/customers
  *
- * Supports dynamic 2-year time range filtering ("2y", "1y", "90d", "30d").
+ * Supports Daily, Monthly, Yearly granularity and Calendar/Year filtering (2024–2026).
  */
 
 import { create } from "zustand";
@@ -14,8 +14,8 @@ import { api } from "@/lib/api";
 
 /* ── Types ──────────────────────────────────────────────────── */
 
-export type DashboardTab = "executive" | "sales" | "customers";
-export type TimeRange = "2y" | "1y" | "90d" | "30d";
+export type DashboardPageType = "executive" | "sales" | "customers";
+export type Granularity = "daily" | "monthly" | "yearly";
 
 export interface KPICard {
   id: string;
@@ -45,62 +45,142 @@ export interface DashboardData {
 }
 
 interface DashboardState {
-  activeTab: DashboardTab;
-  activeTimeRange: TimeRange;
+  currentPage: DashboardPageType;
+  granularity: Granularity;
+  timeRange: string;
+  selectedDate: string; // e.g. "2026-09-10"
+  selectedMonth: { year: number; month: number }; // 0-indexed month (8 = September)
+  selectedYear: number; // e.g. 2026
+  startDate: string | null;
+  endDate: string | null;
   data: DashboardData | null;
   isLoading: boolean;
   error: string | null;
-  lastFetchedKey: string | null;
 
-  setActiveTab: (tab: DashboardTab) => Promise<void>;
-  setActiveTimeRange: (range: TimeRange) => Promise<void>;
-  fetchDashboard: (tab?: DashboardTab, range?: TimeRange) => Promise<void>;
+  selectDaily: (dateStr?: string) => Promise<void>;
+  selectMonthly: (year?: number, month?: number) => Promise<void>;
+  selectYearly: (year?: number) => Promise<void>;
+  setGranularity: (granularity: Granularity) => Promise<void>;
+  setTimeRange: (timeRange: string) => Promise<void>;
+  setCustomDates: (startDate: string | null, endDate: string | null) => Promise<void>;
+  resetToDefaultRange: () => Promise<void>;
+  fetchDashboard: (page?: DashboardPageType) => Promise<void>;
   refreshDashboard: () => Promise<void>;
 }
 
 /* ── Store ──────────────────────────────────────────────────── */
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
-  activeTab: "executive",
-  activeTimeRange: "2y",
+  currentPage: "executive",
+  granularity: "yearly",
+  timeRange: "2026",
+  selectedDate: "2026-09-10",
+  selectedMonth: { year: 2026, month: 8 },
+  selectedYear: 2026,
+  startDate: "2026-01-01",
+  endDate: "2026-12-31",
   data: null,
   isLoading: false,
   error: null,
-  lastFetchedKey: null,
 
-  setActiveTab: async (tab: DashboardTab) => {
-    if (tab === get().activeTab) return;
-    set({ activeTab: tab });
-    await get().fetchDashboard(tab, get().activeTimeRange);
+  selectDaily: async (dateStr?: string) => {
+    const targetDate = dateStr || get().selectedDate || "2026-09-10";
+    set({
+      granularity: "daily",
+      selectedDate: targetDate,
+      startDate: targetDate,
+      endDate: targetDate,
+      timeRange: "daily",
+    });
+    await get().fetchDashboard();
   },
 
-  setActiveTimeRange: async (range: TimeRange) => {
-    if (range === get().activeTimeRange) return;
-    set({ activeTimeRange: range });
-    await get().fetchDashboard(get().activeTab, range);
+  selectMonthly: async (year?: number, month?: number) => {
+    const targetYear = year ?? get().selectedMonth.year ?? 2026;
+    const targetMonth = month ?? get().selectedMonth.month ?? 8;
+    const lastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+    const monthStr = String(targetMonth + 1).padStart(2, "0");
+    const start = `${targetYear}-${monthStr}-01`;
+    const end = `${targetYear}-${monthStr}-${String(lastDay).padStart(2, "0")}`;
+
+    set({
+      granularity: "monthly",
+      selectedMonth: { year: targetYear, month: targetMonth },
+      startDate: start,
+      endDate: end,
+      timeRange: "monthly",
+    });
+    await get().fetchDashboard();
   },
 
-  fetchDashboard: async (tabOverride?: DashboardTab, rangeOverride?: TimeRange) => {
-    const tab = tabOverride || get().activeTab;
-    const range = rangeOverride || get().activeTimeRange;
-    const fetchKey = `${tab}:${range}`;
+  selectYearly: async (year?: number) => {
+    const targetYear = year ?? get().selectedYear ?? 2026;
+    const start = `${targetYear}-01-01`;
+    const end = `${targetYear}-12-31`;
 
-    // Skip if already loading
-    if (get().isLoading) return;
+    set({
+      granularity: "yearly",
+      selectedYear: targetYear,
+      startDate: start,
+      endDate: end,
+      timeRange: String(targetYear),
+    });
+    await get().fetchDashboard();
+  },
 
-    set({ isLoading: true, error: null });
+  setGranularity: async (granularity: Granularity) => {
+    if (granularity === "daily") {
+      await get().selectDaily();
+    } else if (granularity === "monthly") {
+      await get().selectMonthly();
+    } else if (granularity === "yearly") {
+      await get().selectYearly();
+    }
+  },
+
+  setTimeRange: async (timeRange: string) => {
+    set({ timeRange, startDate: null, endDate: null });
+    await get().fetchDashboard();
+  },
+
+  setCustomDates: async (startDate: string | null, endDate: string | null) => {
+    set({ startDate, endDate, timeRange: "custom" });
+    await get().fetchDashboard();
+  },
+
+  resetToDefaultRange: async () => {
+    const g = get().granularity;
+    if (g === "daily") {
+      await get().selectDaily("2026-09-10");
+    } else if (g === "monthly") {
+      await get().selectMonthly(2026, 8);
+    } else {
+      await get().selectYearly(2026);
+    }
+  },
+
+  fetchDashboard: async (pageOverride?: DashboardPageType) => {
+    const { currentPage, granularity, timeRange, startDate, endDate } = get();
+    const page = pageOverride || currentPage;
+    const isNewPage = pageOverride && pageOverride !== currentPage;
+
+    set({
+      currentPage: page,
+      isLoading: true,
+      error: null,
+      ...(isNewPage ? { data: null } : {}),
+    });
+
+    let url = `/api/v1/dashboards/${page}?granularity=${granularity}`;
+    if (startDate && endDate) {
+      url += `&start_date=${startDate}&end_date=${endDate}`;
+    } else {
+      url += `&time_range=${timeRange}`;
+    }
 
     try {
-      const data = await api.get<DashboardData>(
-        `/api/v1/dashboards/${tab}?time_range=${range}`
-      );
-      set({
-        data,
-        isLoading: false,
-        lastFetchedKey: fetchKey,
-        activeTab: tab,
-        activeTimeRange: range,
-      });
+      const data = await api.get<DashboardData>(url);
+      set({ data, isLoading: false });
     } catch (err: any) {
       set({
         error: err?.detail || err?.message || "Failed to load dashboard analytics",
@@ -110,19 +190,6 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   },
 
   refreshDashboard: async () => {
-    const { activeTab, activeTimeRange } = get();
-    set({ isLoading: true, error: null, lastFetchedKey: null });
-
-    try {
-      const data = await api.get<DashboardData>(
-        `/api/v1/dashboards/${activeTab}?time_range=${activeTimeRange}`
-      );
-      set({ data, isLoading: false });
-    } catch (err: any) {
-      set({
-        error: err?.detail || err?.message || "Failed to load dashboard analytics",
-        isLoading: false,
-      });
-    }
+    await get().fetchDashboard();
   },
 }));

@@ -1,0 +1,402 @@
+/* ══════════════════════════════════════════════════════════════
+   VOXORA AI — Dashboard Header Navigation & Timeline Controls
+   Palette A: Dark Obsidian Glass & Emerald Highlights
+   ══════════════════════════════════════════════════════════════ */
+
+.navContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 4px 6px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  backdrop-filter: blur(16px);
+  position: relative;
+  z-index: 40;
+  width: fit-content;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Granularity Pill Toggle (Daily | Monthly | Yearly) ──── */
+
+.granularityGroup {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(2, 6, 23, 0.5);
+  padding: 3px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.granularityBtn {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  color: #94a3b8;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.granularityBtn:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.granularityBtnActive {
+  background: rgba(16, 185, 129, 0.18) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  font-weight: 600;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+/* ── Contextual Date Trigger Button ──────────────────────── */
+
+.popoverContainer {
+  position: relative;
+}
+
+.contextTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  color: #f1f5f9;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  user-select: none;
+}
+
+.contextTrigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.contextTriggerActive {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #10b981;
+}
+
+.chevronIcon {
+  opacity: 0.6;
+  transition: transform 0.15s ease;
+}
+
+.chevronIconOpen {
+  transform: rotate(180deg);
+}
+
+/* ── Shared Popover Card ─────────────────────────────────── */
+
+.popoverCard {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  background: rgba(11, 17, 30, 0.98);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.08);
+  z-index: 60;
+  backdrop-filter: blur(24px);
+  animation: popoverFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes popoverFadeIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── 1. Yearly Popover (Image 2) ─────────────────────────── */
+
+.yearDropdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 140px;
+}
+
+.yearItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  text-align: left;
+}
+
+.yearItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+}
+
+.yearItemActive {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10b981 !important;
+  font-weight: 600;
+}
+
+.checkIcon {
+  color: #10b981;
+}
+
+/* ── 2. Monthly Popover (Image 3) ────────────────────────── */
+
+.monthPopoverCard {
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.popoverHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.fieldLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.selectDropdown {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-size: 12.5px;
+  font-weight: 500;
+  padding: 5px 28px 5px 10px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  transition: border-color 0.15s ease;
+}
+
+.selectDropdown:focus,
+.selectDropdown:hover {
+  border-color: #10b981;
+}
+
+.selectDropdown option {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+.monthGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.monthCell {
+  padding: 10px 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #cbd5e1;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s ease;
+  text-align: center;
+}
+
+.monthCell:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #f8fafc;
+}
+
+.monthCellActive {
+  background: #10b981 !important;
+  color: #020617 !important;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35);
+}
+
+/* ── 3. Daily Calendar Popover (Image 4) ─────────────────── */
+
+.dailyPopoverCard {
+  width: 290px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.topControlsRow {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 8px;
+}
+
+.controlField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.monthNavHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+
+.navArrowBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.navArrowBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+.monthNavTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.weekdayHeader {
+  padding: 4px 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.dayCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+.dayCell:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+}
+
+.dayCellTrailing {
+  color: #475569 !important;
+  opacity: 0.6;
+}
+
+.dayCellActive {
+  background: #10b981 !important;
+  color: #020617 !important;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+/* ── No Data Available Alert Banner ──────────────────────── */
+
+.noDataBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 10px;
+  color: #fbbf24;
+  font-size: 12.5px;
+  animation: bannerFade 0.2s ease;
+}
+
+@keyframes bannerFade {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.noDataLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.resetBtn {
+  padding: 5px 12px;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-radius: 6px;
+  color: #fef08a;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.resetBtn:hover {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: #fbbf24;
+}

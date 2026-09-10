@@ -140,8 +140,53 @@
   border-radius: var(--vx-radius-full);
   font-size: 10px;
   font-weight: 600;
-  color: #34d399;
+  color: #10b981;
   text-transform: uppercase;
+}
+
+.subItemContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 24px;
+  margin: 2px 0 6px 0;
+}
+
+.subItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.subItem:hover {
+  color: #f1f5f9;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.subItemActive {
+  color: #10b981 !important;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.12) !important;
+}
+
+.subDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #64748b;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.subItemActive .subDot {
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.8);
 }
 
 /* ── Conversations Section ─────────────────────────────────── */

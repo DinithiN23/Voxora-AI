@@ -6,7 +6,10 @@ Provides three specialized executive dashboards powered by Google BigQuery:
 2. Sales & Regional Performance — Territory breakdown, channel attribution, quota attainment, units sold.
 3. Customer Intelligence & LTV — Tier segmentation (Enterprise vs Mid vs SMB), retention, top accounts, CLV.
 
-Supports dynamic time ranges: "2y" (default 24 months), "1y" (12 months), "90d" (90 days), "30d" (30 days).
+Supports:
+- Dynamic time ranges: "2y" (default 24 months), "1y", "90d", "30d", "2024", "2025", "2026", "all"
+- Custom date ranges: start_date and end_date (YYYY-MM-DD)
+- Granularity: "daily", "monthly", "yearly"
 """
 
 import logging
@@ -25,22 +28,35 @@ class DashboardService:
     # 1. Executive Overview Dashboard
     # ══════════════════════════════════════════════════════════════
 
-    async def get_executive_dashboard(self, time_range: str = "2y") -> dict[str, Any]:
+    async def get_executive_dashboard(
+        self,
+        time_range: str = "2y",
+        start_date: str | None = None,
+        end_date: str | None = None,
+        granularity: str = "monthly",
+    ) -> dict[str, Any]:
         """
         Build the Executive Overview dashboard payload:
         - 5 Macro KPI scorecards (Revenue, Profit, Orders, AOV, Margin)
-        - Monthly Revenue & Profit Trajectory (area chart)
+        - Revenue & Profit Trajectory (area chart based on granularity)
         - Revenue by Territory (bar chart)
         - Revenue by Customer Segment (pie chart)
         - Top 5 Products by Revenue (horizontal bar chart)
         - Sales Channel Performance (bar chart)
         """
         dataset = bigquery_client.full_dataset_path
-        date_where = self._get_date_where(time_range)
-        range_label = self._get_range_label(time_range)
+        date_where = self._get_date_where(time_range, start_date, end_date)
+        range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_executive_kpis(dataset, date_where)
-        revenue_trend = await self._fetch_monthly_trend(dataset, date_where, "Monthly Revenue & Profit Trajectory")
+        revenue_trend = await self._fetch_trend(
+            dataset,
+            date_where,
+            "Revenue & Gross Profit Trajectory",
+            granularity,
+            start_date=start_date,
+            end_date=end_date,
+        )
         revenue_by_region = await self._fetch_revenue_by_region(dataset, date_where)
         revenue_by_segment = await self._fetch_revenue_by_segment(dataset, date_where)
         top_products = await self._fetch_top_products(dataset, date_where)
@@ -63,23 +79,31 @@ class DashboardService:
     # 2. Sales & Regional Performance Dashboard
     # ══════════════════════════════════════════════════════════════
 
-    async def get_sales_dashboard(self, time_range: str = "2y") -> dict[str, Any]:
+    async def get_sales_dashboard(
+        self,
+        time_range: str = "2y",
+        start_date: str | None = None,
+        end_date: str | None = None,
+        granularity: str = "monthly",
+    ) -> dict[str, Any]:
         """
         Build the Sales & Regional Performance dashboard payload:
         - 5 Regional & Channel scorecards (Regional Rev, Top Region, Units Sold, Avg Deal, Leading Channel)
         - Territory Revenue & Profit Comparison (grouped bar chart)
-        - Monthly Territory Revenue Trajectory (area chart)
+        - Territory Revenue Trajectory (area chart based on granularity)
         - Channel Revenue Attribution (pie/donut chart)
         - Product Category Performance by Units (bar chart)
         - Channel Average Deal Size (horizontal bar chart)
         """
         dataset = bigquery_client.full_dataset_path
-        date_where = self._get_date_where(time_range)
-        range_label = self._get_range_label(time_range)
+        date_where = self._get_date_where(time_range, start_date, end_date)
+        range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_sales_kpis(dataset, date_where)
         region_comparison = await self._fetch_region_comparison(dataset, date_where)
-        monthly_sales_trend = await self._fetch_monthly_sales_trend(dataset, date_where)
+        monthly_sales_trend = await self._fetch_sales_trend(
+            dataset, date_where, granularity, start_date=start_date, end_date=end_date
+        )
         channel_share = await self._fetch_channel_share(dataset, date_where)
         product_category_sales = await self._fetch_product_category_sales(dataset, date_where)
         channel_deal_size = await self._fetch_channel_deal_size(dataset, date_where)
@@ -101,23 +125,31 @@ class DashboardService:
     # 3. Customer Intelligence & Lifetime Value (LTV) Dashboard
     # ══════════════════════════════════════════════════════════════
 
-    async def get_customer_dashboard(self, time_range: str = "2y") -> dict[str, Any]:
+    async def get_customer_dashboard(
+        self,
+        time_range: str = "2y",
+        start_date: str | None = None,
+        end_date: str | None = None,
+        granularity: str = "monthly",
+    ) -> dict[str, Any]:
         """
         Build the Customer Intelligence & LTV dashboard payload:
         - 5 Account scorecards (Total Accounts, Enterprise Share %, Avg LTV, Repeat Rate %, Top Account Spend)
         - Customer Tier Revenue Share (pie/donut chart)
-        - Monthly Active Accounts & Revenue (area chart)
+        - Active Accounts & Spend Trajectory (area chart based on granularity)
         - Top 10 High-Value Enterprise Accounts (horizontal bar chart)
         - Average Order Value by Customer Tier (bar chart)
         - Customer Territory Distribution (bar chart)
         """
         dataset = bigquery_client.full_dataset_path
-        date_where = self._get_date_where(time_range)
-        range_label = self._get_range_label(time_range)
+        date_where = self._get_date_where(time_range, start_date, end_date)
+        range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_customer_kpis(dataset, date_where)
         tier_share = await self._fetch_revenue_by_segment(dataset, date_where, title="Revenue Share by Customer Tier")
-        monthly_customers = await self._fetch_monthly_active_customers(dataset, date_where)
+        monthly_customers = await self._fetch_customer_trend(
+            dataset, date_where, granularity, start_date=start_date, end_date=end_date
+        )
         top_accounts = await self._fetch_top_enterprise_accounts(dataset, date_where)
         aov_by_tier = await self._fetch_aov_by_tier(dataset, date_where)
         customer_territory = await self._fetch_customer_territory_dist(dataset)
@@ -136,7 +168,7 @@ class DashboardService:
         }
 
     # ══════════════════════════════════════════════════════════════
-    # Internal KPI Fetchers
+    # KPI Fetchers
     # ══════════════════════════════════════════════════════════════
 
     async def _fetch_executive_kpis(self, dataset: str, date_where: str) -> list[dict[str, Any]]:
@@ -166,7 +198,7 @@ class DashboardService:
                     "label": "Total Revenue",
                     "value": revenue,
                     "formatted_value": self._format_currency(revenue),
-                    "trend": "up",
+                    "trend": "up" if revenue > 0 else "neutral",
                     "color": "#10B981",
                 },
                 {
@@ -174,7 +206,7 @@ class DashboardService:
                     "label": "Gross Profit",
                     "value": profit,
                     "formatted_value": self._format_currency(profit),
-                    "trend": "up",
+                    "trend": "up" if profit > 0 else "neutral",
                     "color": "#059669",
                 },
                 {
@@ -182,7 +214,7 @@ class DashboardService:
                     "label": "Total Orders",
                     "value": orders,
                     "formatted_value": f"{orders:,}",
-                    "trend": "up",
+                    "trend": "up" if orders > 0 else "neutral",
                     "color": "#6366F1",
                 },
                 {
@@ -246,10 +278,10 @@ class DashboardService:
             units = int(totals_row.get("total_units") or 0)
             avg_deal = float(totals_row.get("avg_deal_size") or 0)
 
-            top_region_name = top_reg_row.get("region", "Western")
+            top_region_name = top_reg_row.get("region", "—")
             top_region_rev = float(top_reg_row.get("rev") or 0)
 
-            top_channel_name = top_chan_row.get("channel", "Direct Sales")
+            top_channel_name = top_chan_row.get("channel", "—")
             top_channel_rev = float(top_chan_row.get("rev") or 0)
             chan_pct = (top_channel_rev / revenue * 100.0) if revenue > 0 else 0.0
 
@@ -259,7 +291,7 @@ class DashboardService:
                     "label": "Regional Sales Revenue",
                     "value": revenue,
                     "formatted_value": self._format_currency(revenue),
-                    "trend": "up",
+                    "trend": "up" if revenue > 0 else "neutral",
                     "color": "#10B981",
                 },
                 {
@@ -267,7 +299,7 @@ class DashboardService:
                     "label": f"Top Territory ({top_region_name})",
                     "value": top_region_rev,
                     "formatted_value": self._format_currency(top_region_rev),
-                    "trend": "up",
+                    "trend": "up" if top_region_rev > 0 else "neutral",
                     "color": "#6366F1",
                 },
                 {
@@ -275,7 +307,7 @@ class DashboardService:
                     "label": "Total Units Delivered",
                     "value": units,
                     "formatted_value": f"{units:,}",
-                    "trend": "up",
+                    "trend": "up" if units > 0 else "neutral",
                     "color": "#0EA5E9",
                 },
                 {
@@ -291,7 +323,7 @@ class DashboardService:
                     "label": f"Leading Channel ({top_channel_name})",
                     "value": round(chan_pct, 1),
                     "formatted_value": f"{chan_pct:.1f}%",
-                    "trend": "up",
+                    "trend": "up" if chan_pct > 0 else "neutral",
                     "color": "#10B981",
                 },
             ]
@@ -344,7 +376,7 @@ class DashboardService:
             repeat_rate = float(row.get("repeat_rate_pct") or 0)
             ent_share = float(row.get("ent_share_pct") or 0)
 
-            top_acc_name = top_acc_row.get("name", "Key Enterprise")
+            top_acc_name = top_acc_row.get("name", "—")
             top_acc_spend = float(top_acc_row.get("total_spend") or 0)
 
             return [
@@ -353,7 +385,7 @@ class DashboardService:
                     "label": "Active Customer Accounts",
                     "value": active_accounts,
                     "formatted_value": f"{active_accounts:,}",
-                    "trend": "up",
+                    "trend": "up" if active_accounts > 0 else "neutral",
                     "color": "#10B981",
                 },
                 {
@@ -361,7 +393,7 @@ class DashboardService:
                     "label": "Enterprise Revenue Share",
                     "value": ent_share,
                     "formatted_value": f"{ent_share:.1f}%",
-                    "trend": "up",
+                    "trend": "up" if ent_share > 0 else "neutral",
                     "color": "#6366F1",
                 },
                 {
@@ -369,7 +401,7 @@ class DashboardService:
                     "label": "Avg. Customer Lifetime Spend",
                     "value": avg_clv,
                     "formatted_value": self._format_currency(avg_clv),
-                    "trend": "up",
+                    "trend": "up" if avg_clv > 0 else "neutral",
                     "color": "#0EA5E9",
                 },
                 {
@@ -377,15 +409,15 @@ class DashboardService:
                     "label": "Multi-Order Retention Rate",
                     "value": repeat_rate,
                     "formatted_value": f"{repeat_rate:.1f}%",
-                    "trend": "up",
+                    "trend": "up" if repeat_rate > 0 else "neutral",
                     "color": "#10B981",
                 },
                 {
                     "id": "kpi-cust-top-spend",
-                    "label": f"Top Account ({top_acc_name[:14]}..)",
+                    "label": f"Top Account ({top_acc_name[:14]}..)" if top_acc_name != "—" else "Top Account",
                     "value": top_acc_spend,
                     "formatted_value": self._format_currency(top_acc_spend),
-                    "trend": "up",
+                    "trend": "up" if top_acc_spend > 0 else "neutral",
                     "color": "#F59E0B",
                 },
             ]
@@ -394,42 +426,136 @@ class DashboardService:
             return []
 
     # ══════════════════════════════════════════════════════════════
-    # Chart Fetchers
+    # Chart Fetchers with Granularity (Daily / Monthly / Yearly)
     # ══════════════════════════════════════════════════════════════
 
-    async def _fetch_monthly_trend(self, dataset: str, date_where: str, title: str) -> dict[str, Any]:
-        """Monthly revenue and gross profit trajectory."""
+    async def _fetch_trend(
+        self,
+        dataset: str,
+        date_where: str,
+        title: str,
+        granularity: str = "monthly",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Revenue and gross profit trajectory formatted by granularity."""
+        fmt_expr, label_alias = self._get_granularity_format(
+            granularity, start_date=start_date, end_date=end_date
+        )
         sql = f"""
         SELECT
-            FORMAT_DATE('%Y-%m', DATE(order_date)) AS month,
+            {fmt_expr} AS {label_alias},
             ROUND(SUM(total_amount), 2) AS revenue,
             ROUND(SUM(profit), 2) AS profit
         FROM `{dataset}.orders`
         {date_where}
-        GROUP BY month
-        ORDER BY month
+        GROUP BY {label_alias}
+        ORDER BY {label_alias}
         """
         try:
             result = await bigquery_client.execute_query(sql)
+            freq_label = "Hourly" if (start_date and end_date and start_date == end_date) else granularity.capitalize()
             return {
                 "id": "chart-revenue-trend",
-                "title": title,
+                "title": f"{title} ({freq_label})",
                 "chart_type": "area",
                 "chart_config": {
-                    "x_key": "month",
+                    "x_key": label_alias,
                     "y_keys": ["revenue", "profit"],
-                    "x_label": "Month",
+                    "x_label": freq_label,
                     "y_label": "Amount (USD)",
                     "colors": ["#10B981", "#6366F1"],
                 },
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch monthly trend: {e}")
+            logger.error(f"Failed to fetch revenue trend: {e}")
             return self._empty_chart("chart-revenue-trend", title, "area")
 
+    async def _fetch_sales_trend(
+        self,
+        dataset: str,
+        date_where: str,
+        granularity: str = "monthly",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Sales run-rate and order volume trajectory by granularity."""
+        fmt_expr, label_alias = self._get_granularity_format(
+            granularity, start_date=start_date, end_date=end_date
+        )
+        sql = f"""
+        SELECT
+            {fmt_expr} AS {label_alias},
+            ROUND(SUM(total_amount), 2) AS revenue,
+            COUNT(*) AS orders
+        FROM `{dataset}.orders`
+        {date_where}
+        GROUP BY {label_alias}
+        ORDER BY {label_alias}
+        """
+        try:
+            result = await bigquery_client.execute_query(sql)
+            freq_label = "Hourly" if (start_date and end_date and start_date == end_date) else granularity.capitalize()
+            return {
+                "id": "chart-sales-monthly-trend",
+                "title": f"Sales Run-Rate & Volume ({freq_label})",
+                "chart_type": "area",
+                "chart_config": {
+                    "x_key": label_alias,
+                    "y_keys": ["revenue"],
+                    "x_label": freq_label,
+                    "y_label": "Revenue (USD)",
+                    "colors": ["#0EA5E9"],
+                },
+                "data_payload": {"rows": result.get("rows", [])},
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch sales trend: {e}")
+            return self._empty_chart("chart-sales-monthly-trend", "Sales Run-Rate", "area")
+
+    async def _fetch_customer_trend(
+        self,
+        dataset: str,
+        date_where: str,
+        granularity: str = "monthly",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict[str, Any]:
+        """Active customer accounts and spend trajectory by granularity."""
+        fmt_expr, label_alias = self._get_granularity_format(
+            granularity, start_date=start_date, end_date=end_date
+        )
+        sql = f"""
+        SELECT
+            {fmt_expr} AS {label_alias},
+            COUNT(DISTINCT customer_id) AS active_accounts,
+            ROUND(SUM(total_amount), 2) AS monthly_spend
+        FROM `{dataset}.orders`
+        {date_where}
+        GROUP BY {label_alias}
+        ORDER BY {label_alias}
+        """
+        try:
+            result = await bigquery_client.execute_query(sql)
+            return {
+                "id": "chart-cust-monthly-expansion",
+                "title": f"Active Buying Accounts & Spend ({granularity.capitalize()})",
+                "chart_type": "area",
+                "chart_config": {
+                    "x_key": label_alias,
+                    "y_keys": ["monthly_spend"],
+                    "x_label": granularity.capitalize(),
+                    "y_label": "Spend (USD)",
+                    "colors": ["#10B981"],
+                },
+                "data_payload": {"rows": result.get("rows", [])},
+            }
+        except Exception as e:
+            logger.error(f"Failed to fetch customer trend: {e}")
+            return self._empty_chart("chart-cust-monthly-expansion", "Active Accounts", "area")
+
     async def _fetch_region_comparison(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Revenue and Profit by Territory."""
         sql = f"""
         SELECT
             region,
@@ -458,37 +584,6 @@ class DashboardService:
         except Exception as e:
             logger.error(f"Failed to fetch region comparison: {e}")
             return self._empty_chart("chart-sales-region-comparison", "Territory Revenue & Profit", "bar")
-
-    async def _fetch_monthly_sales_trend(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Monthly regional revenue and order volume trajectory."""
-        sql = f"""
-        SELECT
-            FORMAT_DATE('%Y-%m', DATE(order_date)) AS month,
-            ROUND(SUM(total_amount), 2) AS revenue,
-            COUNT(*) AS orders
-        FROM `{dataset}.orders`
-        {date_where}
-        GROUP BY month
-        ORDER BY month
-        """
-        try:
-            result = await bigquery_client.execute_query(sql)
-            return {
-                "id": "chart-sales-monthly-trend",
-                "title": "Monthly Sales Run-Rate & Order Velocity",
-                "chart_type": "area",
-                "chart_config": {
-                    "x_key": "month",
-                    "y_keys": ["revenue"],
-                    "x_label": "Month",
-                    "y_label": "Revenue (USD)",
-                    "colors": ["#0EA5E9"],
-                },
-                "data_payload": {"rows": result.get("rows", [])},
-            }
-        except Exception as e:
-            logger.error(f"Failed to fetch sales monthly trend: {e}")
-            return self._empty_chart("chart-sales-monthly-trend", "Monthly Sales Run-Rate", "area")
 
     async def _fetch_revenue_by_region(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -520,7 +615,9 @@ class DashboardService:
             logger.error(f"Failed to fetch revenue by region: {e}")
             return self._empty_chart("chart-revenue-region", "Revenue by Territory", "bar")
 
-    async def _fetch_revenue_by_segment(self, dataset: str, date_where: str, title: str = "Revenue by Customer Segment") -> dict[str, Any]:
+    async def _fetch_revenue_by_segment(
+        self, dataset: str, date_where: str, title: str = "Revenue by Customer Segment"
+    ) -> dict[str, Any]:
         sql = f"""
         SELECT
             c.segment,
@@ -549,7 +646,6 @@ class DashboardService:
             return self._empty_chart("chart-revenue-segment", title, "pie")
 
     async def _fetch_channel_share(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Channel revenue contribution pie chart."""
         sql = f"""
         SELECT
             channel,
@@ -577,7 +673,6 @@ class DashboardService:
             return self._empty_chart("chart-sales-channel-share", "Channel Revenue Contribution", "pie")
 
     async def _fetch_product_category_sales(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Product category revenue and units sold."""
         sql = f"""
         SELECT
             p.category,
@@ -609,7 +704,6 @@ class DashboardService:
             return self._empty_chart("chart-sales-product-category", "Product Category Sales", "bar")
 
     async def _fetch_channel_deal_size(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Average deal size by sales channel."""
         sql = f"""
         SELECT
             channel,
@@ -639,39 +733,7 @@ class DashboardService:
             logger.error(f"Failed to fetch channel deal size: {e}")
             return self._empty_chart("chart-channel-deal-size", "Average Deal Size", "bar")
 
-    async def _fetch_monthly_active_customers(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Monthly unique buying accounts and spend."""
-        sql = f"""
-        SELECT
-            FORMAT_DATE('%Y-%m', DATE(order_date)) AS month,
-            COUNT(DISTINCT customer_id) AS active_accounts,
-            ROUND(SUM(total_amount), 2) AS monthly_spend
-        FROM `{dataset}.orders`
-        {date_where}
-        GROUP BY month
-        ORDER BY month
-        """
-        try:
-            result = await bigquery_client.execute_query(sql)
-            return {
-                "id": "chart-cust-monthly-expansion",
-                "title": "Monthly Active Buying Accounts & Spend",
-                "chart_type": "area",
-                "chart_config": {
-                    "x_key": "month",
-                    "y_keys": ["monthly_spend"],
-                    "x_label": "Month",
-                    "y_label": "Monthly Spend (USD)",
-                    "colors": ["#10B981"],
-                },
-                "data_payload": {"rows": result.get("rows", [])},
-            }
-        except Exception as e:
-            logger.error(f"Failed to fetch monthly active customers: {e}")
-            return self._empty_chart("chart-cust-monthly-expansion", "Monthly Active Accounts", "area")
-
     async def _fetch_top_enterprise_accounts(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Top 10 High-Value Enterprise Accounts."""
         sql = f"""
         SELECT
             c.name AS account_name,
@@ -688,7 +750,7 @@ class DashboardService:
             result = await bigquery_client.execute_query(sql)
             return {
                 "id": "chart-cust-top-accounts",
-                "title": "Top 10 Enterprise Accounts by Lifetime Spend",
+                "title": "Top 10 Enterprise Accounts by Spend",
                 "chart_type": "bar",
                 "chart_config": {
                     "x_key": "account_name",
@@ -705,7 +767,6 @@ class DashboardService:
             return self._empty_chart("chart-cust-top-accounts", "Top Accounts", "bar")
 
     async def _fetch_aov_by_tier(self, dataset: str, date_where: str) -> dict[str, Any]:
-        """Average Order Value by customer tier."""
         sql = f"""
         SELECT
             c.segment,
@@ -736,7 +797,6 @@ class DashboardService:
             return self._empty_chart("chart-cust-aov-segment", "Average Order Value by Tier", "bar")
 
     async def _fetch_customer_territory_dist(self, dataset: str) -> dict[str, Any]:
-        """Customer count by territory."""
         sql = f"""
         SELECT
             region,
@@ -833,32 +893,79 @@ class DashboardService:
     # ══════════════════════════════════════════════════════════════
 
     @staticmethod
-    def _get_date_where(time_range: str, col: str = "order_date") -> str:
-        if time_range == "30d":
+    def _get_date_where(
+        time_range: str = "2y",
+        start_date: str | None = None,
+        end_date: str | None = None,
+        col: str = "order_date",
+    ) -> str:
+        # Custom calendar date selection takes precedence
+        if start_date and end_date:
+            return f"WHERE DATE({col}) >= DATE('{start_date}') AND DATE({col}) <= DATE('{end_date}')"
+        elif start_date:
+            return f"WHERE DATE({col}) >= DATE('{start_date}')"
+        elif end_date:
+            return f"WHERE DATE({col}) <= DATE('{end_date}')"
+
+        # Check if 4-digit year (e.g. 2024, 2025, 2026, or any other year)
+        if time_range and len(time_range) == 4 and time_range.isdigit():
+            return f"WHERE EXTRACT(YEAR FROM DATE({col})) = {int(time_range)}"
+        elif time_range == "30d":
             return f"WHERE DATE({col}) >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)"
         elif time_range == "90d":
             return f"WHERE DATE({col}) >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)"
         elif time_range == "1y":
             return f"WHERE DATE({col}) >= DATE_SUB(CURRENT_DATE(), INTERVAL 365 DAY)"
-        elif time_range == "2y":
+        elif time_range in ("2y", "all"):
             return f"WHERE DATE({col}) >= DATE_SUB(CURRENT_DATE(), INTERVAL 730 DAY)"
         return ""
+
+    @staticmethod
+    def _get_granularity_format(
+        granularity: str,
+        col: str = "order_date",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> tuple[str, str]:
+        if (start_date and end_date and start_date == end_date) or granularity == "hourly":
+            return f"FORMAT_TIMESTAMP('%H:00', {col})", "period"
+        elif granularity == "daily":
+            return f"FORMAT_DATE('%Y-%m-%d', DATE({col}))", "period"
+        elif granularity == "yearly":
+            return f"FORMAT_DATE('%Y', DATE({col}))", "period"
+        else:  # monthly default
+            return f"FORMAT_DATE('%Y-%m', DATE({col}))", "period"
 
     @staticmethod
     def _join_date_where(date_where: str, prefix: str) -> str:
         if not date_where:
             return ""
-        return date_where.replace("WHERE DATE(", f"WHERE DATE({prefix}.")
+        return (
+            date_where.replace("WHERE DATE(", f"WHERE DATE({prefix}.")
+            .replace("AND DATE(", f"AND DATE({prefix}.")
+            .replace("WHERE EXTRACT(YEAR FROM DATE(", f"WHERE EXTRACT(YEAR FROM DATE({prefix}.")
+            .replace("AND EXTRACT(YEAR FROM DATE(", f"AND EXTRACT(YEAR FROM DATE({prefix}.")
+        )
 
     @staticmethod
-    def _get_range_label(time_range: str) -> str:
+    def _get_range_label(
+        time_range: str = "2y",
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> str:
+        if start_date and end_date:
+            return f"{start_date} to {end_date}"
         labels = {
-            "2y": "Past 2 Years (All Time)",
+            "2y": "Past 2 Years (2024–2026)",
+            "all": "All Time (2024–2026)",
+            "2024": "Year 2024",
+            "2025": "Year 2025",
+            "2026": "Year 2026",
             "1y": "Past 12 Months",
             "90d": "Past 90 Days",
             "30d": "Past 30 Days",
         }
-        return labels.get(time_range, "Past 2 Years (All Time)")
+        return labels.get(time_range, f"Range: {time_range}")
 
     @staticmethod
     def _format_currency(value: float) -> str:

@@ -1,0 +1,26 @@
+services:
+  # 1. Free Redis Instance
+  - type: redis
+    name: voxora-redis
+    ipAllowList: [] # internal access only
+    plan: free
+
+  # 2. FastAPI Backend
+  - type: web
+    name: voxora-backend
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: APP_ENV
+        value: staging
+      - key: DEBUG
+        value: false
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: voxora-redis
+          property: connectionString
+      # Add all other env vars in the Render UI dashboard

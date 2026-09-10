@@ -108,17 +108,45 @@ export default function Sidebar() {
 
         {/* ── Main Navigation ─────────────────────────────── */}
         {navItems.map((item) => {
-          const isActive = pathname === item.href && (!currentId || item.href !== "/ask");
+          const isDashboard = item.href === "/dashboards";
+          const isActive = isDashboard
+            ? pathname.startsWith("/dashboards")
+            : pathname === item.href && (!currentId || item.href !== "/ask");
+
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span>{item.label}</span>
-              {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
-            </Link>
+            <div key={item.href}>
+              <Link
+                href={isDashboard ? "/dashboards/executive" : item.href}
+                className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                <span>{item.label}</span>
+                {item.badge && <span className={styles.navBadge}>{item.badge}</span>}
+              </Link>
+
+              {/* Sub-routes for Dashboards */}
+              {isDashboard && (
+                <div className={styles.subItemContainer}>
+                  {[
+                    { href: "/dashboards/executive", label: "Executive Overview" },
+                    { href: "/dashboards/sales", label: "Sales & Regional" },
+                    { href: "/dashboards/customers", label: "Customer Intelligence" },
+                  ].map((sub) => {
+                    const isSubActive = pathname === sub.href;
+                    return (
+                      <Link
+                        key={sub.href}
+                        href={sub.href}
+                        className={`${styles.subItem} ${isSubActive ? styles.subItemActive : ""}`}
+                      >
+                        <span className={styles.subDot} />
+                        <span>{sub.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           );
         })}
 
