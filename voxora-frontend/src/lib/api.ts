@@ -3,7 +3,8 @@
  * Centralized HTTP client with auth token management.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const rawBase = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = rawBase ? rawBase.replace(/\/+$/, "") : "";
 
 class ApiClient {
   private accessToken: string | null = null;
@@ -34,21 +35,31 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${API_BASE}${endpoint}`;
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = API_BASE ? `${API_BASE}${cleanEndpoint}` : cleanEndpoint;
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        ...this.getHeaders(),
-        ...(options.headers || {}),
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getHeaders(),
+          ...(options.headers || {}),
+        },
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      throw new ApiError(
+        0,
+        `Network error: unable to connect to server (${errMsg}). Please verify your backend service is reachable.`
+      );
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({}));
       throw new ApiError(
         response.status,
-        error.detail || "An error occurred"
+        error.detail || error.message || `Server error (${response.status})`
       );
     }
 

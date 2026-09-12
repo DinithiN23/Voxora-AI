@@ -28,13 +28,13 @@ import {
 import styles from "./DashboardChart.module.css";
 
 const PALETTE = [
-  "#10b981", // Emerald (Primary)
-  "#6366f1", // Indigo (Secondary)
-  "#0ea5e9", // Sky Blue
-  "#f59e0b", // Amber
-  "#14b8a6", // Teal
-  "#8b5cf6", // Violet
-  "#f43f5e", // Rose
+  "#3b82f6", // Sapphire Blue (Primary)
+  "#10b981", // Emerald (Growth)
+  "#06b6d4", // Cyan (Volume)
+  "#8b5cf6", // Purple (Segment)
+  "#f59e0b", // Amber (Alert)
+  "#ec4899", // Pink
+  "#6366f1", // Indigo
 ];
 
 function formatValue(val: any): string {

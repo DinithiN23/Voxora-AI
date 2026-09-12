@@ -29,8 +29,10 @@ export default function LoginPage() {
       {/* ── Left Brand Panel ─────────────────────────────── */}
       <div className={styles.brandPanel}>
         <div className={styles.brandContent}>
-          <div className={styles.logoMark}>V</div>
-          <h1 className={styles.brandTitle}>Voxora AI</h1>
+          <Link href="/" className={styles.brandLink} title="Back to Home">
+            <div className={styles.logoMark}>V</div>
+            <h1 className={styles.brandTitle}>Voxora AI</h1>
+          </Link>
           <p className={styles.brandTagline}>
             Ask questions about your business in plain English.
             Get instant answers, insights, and visualizations.
@@ -92,6 +94,12 @@ export default function LoginPage() {
       {/* ── Right Form Panel ─────────────────────────────── */}
       <div className={styles.formPanel}>
         <div className={styles.formContainer}>
+          <div className={styles.mobileBrandHeader}>
+            <Link href="/" className={styles.mobileBrandLink} title="Back to Home">
+              <div className={styles.mobileLogoMark}>V</div>
+              <span className={styles.mobileBrandTitle}>Voxora AI</span>
+            </Link>
+          </div>
           <div className={styles.formHeader}>
             <h2 className={styles.formTitle}>Welcome back</h2>
             <p className={styles.formSubtitle}>

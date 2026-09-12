@@ -8,31 +8,39 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 
 :root {
-  /* Brand (Palette A: Obsidian & Emerald Slate) */
-  --vx-brand-primary: #10B981;
-  --vx-brand-primary-light: #34D399;
-  --vx-brand-primary-dark: #059669;
-  --vx-brand-secondary: #6366F1;
-  --vx-brand-secondary-light: #818CF8;
-  --vx-brand-gradient: linear-gradient(135deg, #10B981 0%, #6366F1 100%);
-  --vx-brand-gradient-hover: linear-gradient(135deg, #34D399 0%, #818CF8 100%);
-  --vx-brand-gradient-subtle: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%);
+  /* Brand — Minimalist Precision Sapphire & Cyan (Clean, High-Tech, Crisp) */
+  --vx-brand-primary: #3B82F6;
+  --vx-brand-primary-light: #60A5FA;
+  --vx-brand-primary-dark: #2563EB;
+  --vx-brand-secondary: #06B6D4;
+  --vx-brand-secondary-light: #22D3EE;
+  --vx-brand-gradient: linear-gradient(135deg, #3B82F6 0%, #06B6D4 100%);
+  --vx-brand-gradient-hover: linear-gradient(135deg, #60A5FA 0%, #22D3EE 100%);
+  --vx-brand-gradient-subtle: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(6, 182, 212, 0.08) 100%);
 
-  /* Surfaces */
-  --vx-bg-primary: #090D16;
-  --vx-bg-secondary: #0F172A;
-  --vx-bg-tertiary: #1E293B;
-  --vx-bg-elevated: #1E293B;
-  --vx-bg-glass: rgba(15, 23, 42, 0.78);
-  --vx-bg-glass-light: rgba(30, 41, 59, 0.65);
-  --vx-bg-input: rgba(15, 23, 42, 0.85);
+  /* Surfaces — Minimalist Dark Slate Canvas (Reduces Eye Fatigue, High Data Contrast) */
+  --vx-bg-primary: #0A0D14;
+  --vx-bg-secondary: #101522;
+  --vx-bg-tertiary: #171E2E;
+  --vx-bg-elevated: #1B2335;
+  --vx-bg-glass: rgba(16, 21, 34, 0.85);
+  --vx-bg-glass-light: rgba(23, 30, 46, 0.75);
+  --vx-bg-input: rgba(16, 21, 34, 0.9);
 
-  /* Text */
+  /* Text — Soft Ergonomic Contrast (Never harsh pure white, no eye strain) */
   --vx-text-primary: #F8FAFC;
   --vx-text-secondary: #94A3B8;
   --vx-text-muted: #64748B;
-  --vx-text-inverse: #090D16;
-  --vx-text-brand: #34D399;
+  --vx-text-inverse: #0A0D14;
+  --vx-text-brand: #60A5FA;
+
+  /* Data Accents — Immediate Eye Focus */
+  --vx-data-accent-1: #3B82F6;
+  --vx-data-accent-2: #10B981;
+  --vx-data-accent-3: #8B5CF6;
+  --vx-data-accent-4: #F59E0B;
+  --vx-data-accent-5: #EC4899;
+  --vx-data-accent-6: #06B6D4;
 
   /* Semantic Colors */
   --vx-success: #10B981;
@@ -41,22 +49,22 @@
   --vx-warning-soft: rgba(245, 158, 11, 0.12);
   --vx-error: #EF4444;
   --vx-error-soft: rgba(239, 68, 68, 0.12);
-  --vx-info: #0EA5E9;
-  --vx-info-soft: rgba(14, 165, 233, 0.12);
+  --vx-info: #3B82F6;
+  --vx-info-soft: rgba(59, 130, 246, 0.12);
 
-  /* Borders */
-  --vx-border: rgba(255, 255, 255, 0.07);
-  --vx-border-light: rgba(255, 255, 255, 0.12);
-  --vx-border-focus: rgba(16, 185, 129, 0.45);
+  /* Borders — Clean, Subtle & Minimalist */
+  --vx-border: rgba(255, 255, 255, 0.08);
+  --vx-border-light: rgba(255, 255, 255, 0.14);
+  --vx-border-focus: rgba(59, 130, 246, 0.5);
 
-  /* Shadows & Effects */
-  --vx-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --vx-shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --vx-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
-  --vx-shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
-  --vx-glow-primary: 0 0 20px rgba(16, 185, 129, 0.25);
-  --vx-glow-secondary: 0 0 20px rgba(99, 102, 241, 0.2);
-  --vx-glow-success: 0 0 20px rgba(16, 185, 129, 0.2);
+  /* Shadows & Subtle Glows */
+  --vx-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --vx-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --vx-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --vx-shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --vx-glow-primary: 0 0 16px rgba(59, 130, 246, 0.2);
+  --vx-glow-secondary: 0 0 16px rgba(6, 182, 212, 0.15);
+  --vx-glow-success: 0 0 16px rgba(16, 185, 129, 0.18);
   --vx-glass-blur: blur(20px);
 
   /* Spacing */

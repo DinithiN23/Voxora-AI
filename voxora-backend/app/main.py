@@ -68,6 +68,17 @@ def create_app() -> FastAPI:
     async def health_check():
         return {"status": "healthy", "service": "voxora-backend", "version": "0.1.0"}
 
+    @app.exception_handler(Exception)
+    async def global_exception_handler(request, exc):
+        import logging
+        import traceback
+        logging.getLogger(__name__).error("Unhandled exception: %s", traceback.format_exc())
+        from fastapi.responses import JSONResponse
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Server error: {str(exc)}"},
+        )
+
     return app
 
 

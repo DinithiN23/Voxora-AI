@@ -31,8 +31,10 @@ export default function RegisterPage() {
       {/* ── Left Brand Panel ─────────────────────────────── */}
       <div className={styles.brandPanel}>
         <div className={styles.brandContent}>
-          <div className={styles.logoMark}>V</div>
-          <h1 className={styles.brandTitle}>Voxora AI</h1>
+          <Link href="/" className={styles.brandLink} title="Back to Home">
+            <div className={styles.logoMark}>V</div>
+            <h1 className={styles.brandTitle}>Voxora AI</h1>
+          </Link>
           <p className={styles.brandTagline}>
             Join thousands of teams using conversational AI
             to unlock insights from their business data.
@@ -103,6 +105,12 @@ export default function RegisterPage() {
       {/* ── Right Form Panel ─────────────────────────────── */}
       <div className={styles.formPanel}>
         <div className={styles.formContainer}>
+          <div className={styles.mobileBrandHeader}>
+            <Link href="/" className={styles.mobileBrandLink} title="Back to Home">
+              <div className={styles.mobileLogoMark}>V</div>
+              <span className={styles.mobileBrandTitle}>Voxora AI</span>
+            </Link>
+          </div>
           <div className={styles.formHeader}>
             <h2 className={styles.formTitle}>Create your account</h2>
             <p className={styles.formSubtitle}>
@@ -132,7 +140,7 @@ export default function RegisterPage() {
                   id="name"
                   type="text"
                   className={styles.input}
-                  placeholder="Dinithi Nimesha"
+                  placeholder="Your name"
                   value={name}
                   onChange={(e) => {
                     setName(e.target.value);
