@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     # Google Cloud
     google_cloud_project: str = ""
     google_application_credentials: str = ""
+    gcp_service_account_json: str = ""
 
     # BigQuery
     bigquery_project: str = ""
@@ -98,6 +99,29 @@ class Settings(BaseSettings):
             except (json.JSONDecodeError, TypeError):
                 return [origin.strip() for origin in v.split(",")]
         return v
+
+    def model_post_init(self, __context: Any) -> None:
+        import os
+        import tempfile
+
+        # If GCP service account JSON is passed as string, write to a temp file
+        raw_json = self.gcp_service_account_json or (
+            self.google_application_credentials
+            if "{" in self.google_application_credentials
+            else ""
+        )
+        if raw_json and "{" in raw_json:
+            tmp_path = os.path.join(tempfile.gettempdir(), "gcp-service-account.json")
+            try:
+                with open(tmp_path, "w", encoding="utf-8") as f:
+                    f.write(raw_json.strip())
+                self.google_application_credentials = tmp_path
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = tmp_path
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).warning("Could not write GCP service account temp file: %s", e)
+        elif self.google_application_credentials and os.path.exists(self.google_application_credentials):
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(self.google_application_credentials)
 
     @property
     def is_production(self) -> bool:
