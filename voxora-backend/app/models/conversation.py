@@ -112,6 +112,7 @@ class QueryLog(Base, UUIDMixin, TimestampMixin):
     status: Mapped[str] = mapped_column(
         String(20), default="success"
     )  # "success", "error", "timeout"
+    llm_provider: Mapped[str | None] = mapped_column(String(50), nullable=True)
     bigquery_job_info: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Relationships

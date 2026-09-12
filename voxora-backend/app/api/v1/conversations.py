@@ -423,6 +423,7 @@ async def send_message_stream(
                             execution_time_ms=query_res.get("execution_time_ms"),
                             rows_returned=query_res.get("row_count"),
                             status="success",
+                            llm_provider=provider,
                             bigquery_job_info={
                                 "job_id": query_res.get("job_id"),
                                 "bytes_billed": bytes_billed,

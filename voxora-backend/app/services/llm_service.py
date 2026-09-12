@@ -13,15 +13,28 @@ from typing import Any
 
 import httpx
 from collections.abc import AsyncGenerator
+import time
 try:
+    import groq
     from groq import AsyncGroq, Groq
 except ImportError:
+    groq = None  # type: ignore[assignment]
     AsyncGroq = None  # type: ignore[assignment,misc]
     Groq = None  # type: ignore[assignment,misc]
 
 from datetime import date, timedelta
 
 from app.config import get_settings
+
+if groq:
+    GROQ_KNOWN_EXCEPTIONS = (
+        groq.APIConnectionError,
+        groq.AuthenticationError,
+        groq.InternalServerError,
+        groq.RateLimitError,
+    )
+else:
+    GROQ_KNOWN_EXCEPTIONS = ()
 
 logger = logging.getLogger(__name__)
 
@@ -86,8 +99,14 @@ class LLMService:
             try:
                 res = await self._call_groq(messages, prompt)
                 return res, "groq"
+            except GROQ_KNOWN_EXCEPTIONS as e:
+                logger.warning("Groq failed (%s: %s). Falling back to Gemini...", type(e).__name__, e)
+                if self.settings.gemini_api_key:
+                    res = await self._call_gemini(messages, prompt)
+                    return res, "gemini"
+                raise
             except Exception as e:
-                logger.warning("Groq failed (%s). Falling back to Gemini...", e)
+                logger.warning("Groq failed with unclassified_error (%s). Falling back to Gemini...", e)
                 if self.settings.gemini_api_key:
                     res = await self._call_gemini(messages, prompt)
                     return res, "gemini"
@@ -220,19 +239,26 @@ class LLMService:
             raise ValueError("GROQ_API_KEY is not configured.")
 
         model = self.settings.groq_model or "qwen/qwen3.8-27b"
-        client = AsyncGroq(api_key=api_key)
+        # Bounded timeout (20.0s): Generous enough to not cut off normal responses, 
+        # but low enough to trigger failover in a reasonable time during genuine hangs.
+        client = AsyncGroq(api_key=api_key, timeout=20.0)
 
         formatted_messages = [{"role": "system", "content": system_prompt}]
         for msg in messages:
             role = "assistant" if msg.get("role") == "assistant" else "user"
             formatted_messages.append({"role": role, "content": msg.get("content", "")})
 
+        start_time = time.perf_counter()
         completion = await client.chat.completions.create(
             model=model,
             messages=formatted_messages,
             temperature=0.7,
-            max_tokens=1024,
+            max_tokens=500,
         )
+        duration = time.perf_counter() - start_time
+        if duration > 10.0:
+            logger.warning("Groq response succeeded but was slow: %.2fs (watch-threshold is 10s)", duration)
+
         return completion.choices[0].message.content.strip()
 
     async def generate_suggestions(self, last_query: str, last_response: str) -> list[str]:
@@ -251,6 +277,9 @@ class LLMService:
             lines = [line.strip().lstrip("1234567890.- ") for line in response_text.split("\n") if line.strip()]
             valid = [l for l in lines if len(l) > 6]
             return valid[:3] if valid else ["What are the key drivers?", "Show me the trend over time", "Compare with last month"]
+        except Exception:
+            return ["What are the key drivers?", "Show me the trend over time", "Compare with last month"]
+
     async def generate_title(self, first_message: str) -> str:
         """Generate a short 3-5 word conversation title from the first question."""
         prompt = f"Create a concise 3-5 word title for a conversation that starts with: '{first_message}'. Return only the title."
