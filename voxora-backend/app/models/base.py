@@ -5,7 +5,11 @@ All models inherit from this base with common columns.
 """
 
 import uuid
-from datetime import UTC, datetime
+try:
+    from datetime import UTC, datetime
+except ImportError:
+    from datetime import datetime, timezone
+    UTC = timezone.utc
 
 from sqlalchemy import DateTime, func
 from sqlalchemy.dialects.postgresql import UUID

@@ -4,7 +4,11 @@ Voxora Backend — Auth API endpoints.
 Handles registration, login, token refresh, and user profile.
 """
 
-from datetime import UTC, datetime
+try:
+    from datetime import UTC, datetime
+except ImportError:
+    from datetime import datetime, timezone
+    UTC = timezone.utc
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select

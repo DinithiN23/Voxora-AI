@@ -4,7 +4,11 @@ Voxora Backend — Security utilities.
 JWT token creation/verification, password hashing, and auth dependencies.
 """
 
-from datetime import UTC, datetime, timedelta
+try:
+    from datetime import UTC, datetime, timedelta
+except ImportError:
+    from datetime import datetime, timedelta, timezone
+    UTC = timezone.utc
 from typing import Any
 from uuid import UUID
 

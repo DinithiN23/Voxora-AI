@@ -54,7 +54,16 @@ def create_app() -> FastAPI:
     # Include API routes
     app.include_router(api_v1_router)
 
-    # Health check
+    # Health check & Root
+    @app.get("/", tags=["System"])
+    async def root():
+        return {
+            "status": "healthy",
+            "service": "voxora-backend",
+            "version": "0.1.0",
+            "message": "Voxora AI Backend is operational on Vercel"
+        }
+
     @app.get("/health", tags=["System"])
     async def health_check():
         return {"status": "healthy", "service": "voxora-backend", "version": "0.1.0"}
