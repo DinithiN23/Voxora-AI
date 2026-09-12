@@ -49,6 +49,9 @@ class DashboardService:
         range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_executive_kpis(dataset, date_where)
+        for kpi in kpis:
+            kpi["period_label"] = range_label
+            
         revenue_trend = await self._fetch_trend(
             dataset,
             date_where,
@@ -100,6 +103,9 @@ class DashboardService:
         range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_sales_kpis(dataset, date_where)
+        for kpi in kpis:
+            kpi["period_label"] = range_label
+            
         region_comparison = await self._fetch_region_comparison(dataset, date_where)
         monthly_sales_trend = await self._fetch_sales_trend(
             dataset, date_where, granularity, start_date=start_date, end_date=end_date
@@ -146,6 +152,9 @@ class DashboardService:
         range_label = self._get_range_label(time_range, start_date, end_date)
 
         kpis = await self._fetch_customer_kpis(dataset, date_where)
+        for kpi in kpis:
+            kpi["period_label"] = range_label
+
         tier_share = await self._fetch_revenue_by_segment(dataset, date_where, title="Revenue Share by Customer Tier")
         monthly_customers = await self._fetch_customer_trend(
             dataset, date_where, granularity, start_date=start_date, end_date=end_date
@@ -899,6 +908,11 @@ class DashboardService:
         end_date: str | None = None,
         col: str = "order_date",
     ) -> str:
+        if time_range and time_range.lower() == "ytd":
+            effective_end = f"DATE('{end_date}')" if end_date else "CURRENT_DATE()"
+            start_date_final = f"DATE_TRUNC({effective_end}, YEAR)"
+            return f"WHERE DATE({col}) >= {start_date_final} AND DATE({col}) <= {effective_end}"
+
         # Custom calendar date selection takes precedence
         if start_date and end_date:
             return f"WHERE DATE({col}) >= DATE('{start_date}') AND DATE({col}) <= DATE('{end_date}')"
@@ -956,6 +970,7 @@ class DashboardService:
         if start_date and end_date:
             return f"{start_date} to {end_date}"
         labels = {
+            "ytd": "Year to Date",
             "2y": "Past 2 Years (2024–2026)",
             "all": "All Time (2024–2026)",
             "2024": "Year 2024",

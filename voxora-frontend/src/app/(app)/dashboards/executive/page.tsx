@@ -130,7 +130,9 @@ export default function ExecutiveDashboardPage() {
               <div key={kpi.id} className={styles.kpiCard}>
                 <div className={styles.kpiGlow} style={{ background: kpi.color }} />
                 <div className={styles.kpiTop}>
-                  <span className={styles.kpiLabel}>{kpi.label}</span>
+                  <span className={styles.kpiLabel}>
+                    {kpi.label} {kpi.period_label ? `(${kpi.period_label})` : ""}
+                  </span>
                   <span className={`${styles.kpiTrend} ${getTrendClass(kpi.trend)}`}>
                     {getTrendArrow(kpi.trend)}
                   </span>

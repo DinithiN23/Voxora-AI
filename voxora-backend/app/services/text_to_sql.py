@@ -42,9 +42,10 @@ class TextToSQLEngine:
         self,
         question: str,
         chat_history: list[dict[str, str]] | None = None,
-    ) -> str:
+        tenant_id: str | None = None,
+    ) -> tuple[str, str]:
         """
-        Generate and validate a BigQuery SQL query from user question and history.
+        Generate and validate a BigQuery SQL query from user question and history. Returns (sql, provider).
         """
         system_prompt = semantic_layer.get_system_prompt()
 
@@ -61,15 +62,15 @@ class TextToSQLEngine:
         })
 
         # Call LLM
-        response = await llm_service.generate_response(messages, system_prompt=system_prompt)
+        response, provider = await llm_service.generate_response(messages, system_prompt=system_prompt)
 
         # Extract and sanitize SQL
         cleaned_sql = self._clean_and_sanitize(response)
 
-        # Validate SQL safety
-        self._validate_sql(cleaned_sql)
+        # Validate SQL safety and inject tenant_id via AST
+        final_sql = self._validate_and_enforce_ast(cleaned_sql, tenant_id)
 
-        return cleaned_sql
+        return final_sql, provider
 
     def _clean_and_sanitize(self, raw_output: str) -> str:
         """Extract SQL from markdown fencing and format."""
@@ -89,18 +90,38 @@ class TextToSQLEngine:
 
         return sql
 
-    def _validate_sql(self, sql: str) -> None:
-        """Verify that the SQL query is strictly read-only and safe."""
-        sql_upper = sql.upper().strip()
+    def _validate_and_enforce_ast(self, sql: str, tenant_id: str | None) -> str:
+        """Verify that the SQL query is strictly read-only and safe via AST, and force inject tenant scope."""
+        import sqlglot
+        from sqlglot import exp
 
-        # Must begin with SELECT or WITH
-        if not (sql_upper.startswith("SELECT") or sql_upper.startswith("WITH")):
+        try:
+            parsed = sqlglot.parse_one(sql, dialect="bigquery")
+        except Exception as e:
+            raise SQLValidationError(f"Query parsing failed: {e}")
+
+        # AST Allowlist 1: Must be a SELECT statement
+        if not isinstance(parsed, exp.Select):
             raise SQLValidationError("Only read-only SELECT queries are allowed.")
 
-        # Check for forbidden mutations
-        for pattern in FORBIDDEN_KEYWORDS:
-            if re.search(pattern, sql_upper):
-                raise SQLValidationError(f"Query contains forbidden operation matching pattern {pattern}")
+        # Require a WHERE clause in the original text to prevent full table scans on time (before tenant inject)
+        if "WHERE" not in sql.upper():
+            raise SQLValidationError("Query must include a WHERE clause with a date-range or partition filter to prevent full table scans.")
+
+        # AST Allowlist 2: Verify only allowed tables are accessed
+        ALLOWED_TABLES = {"orders", "products", "customers", "daily_kpis"}
+        for table in parsed.find_all(exp.Table):
+            table_name = table.name.lower()
+            if table_name not in ALLOWED_TABLES:
+                raise SQLValidationError(f"Query attempts to access unauthorized table: {table_name}")
+
+        # Inject tenant isolation logic
+        if tenant_id:
+            # Add AND tenant_id = '...'
+            tenant_cond = f"tenant_id = '{tenant_id}'"
+            parsed = parsed.where(tenant_cond)
+
+        return parsed.sql(dialect="bigquery")
 
 
 text_to_sql_engine = TextToSQLEngine()

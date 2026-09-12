@@ -30,13 +30,15 @@ class VisualizationService:
         rows: list[dict[str, Any]] = query_result.get("rows", [])
         row_count: int = query_result.get("row_count", 0)
 
-        if not rows or not columns:
+        # 0. Zero-row results
+        if not rows or not columns or row_count == 0:
             return None
 
-        # 1. Single row with 1-2 aggregate numbers -> KPI card
-        if row_count == 1 and len(columns) <= 3:
+        # 1. Single row with 1-2 aggregate numbers (or single-point time series) -> KPI card
+        if row_count == 1:
+            # We handle single-point time series by falling back to a KPI card for the primary metric.
             first_row = rows[0]
-            numeric_cols = [c for c in columns if isinstance(first_row[c], (int, float))]
+            numeric_cols = [c for c in columns if isinstance(first_row.get(c), (int, float))]
             if numeric_cols:
                 primary_col = numeric_cols[0]
                 secondary_col = numeric_cols[1] if len(numeric_cols) > 1 else None
@@ -61,7 +63,19 @@ class VisualizationService:
         numeric_cols = [c for c in columns if isinstance(first_row.get(c), (int, float))]
         text_cols = [c for c in columns if c not in numeric_cols and c != date_col]
 
-        # 2. Time Series -> Line Chart
+        # 2. Multi-dimensional group-bys -> Table
+        if len(text_cols) >= 2 and len(columns) >= 3:
+            return {
+                "chart_type": "table",
+                "title": "Multi-dimensional Breakdown",
+                "chart_config": {
+                    "columns": columns,
+                    "column_labels": {c: self._format_title(c) for c in columns},
+                },
+                "data_payload": {"rows": rows},
+            }
+
+        # 3. Time Series -> Line Chart
         if date_col and numeric_cols and row_count > 1:
             return {
                 "chart_type": "line",
@@ -75,7 +89,7 @@ class VisualizationService:
                 "data_payload": {"rows": rows},
             }
 
-        # 3. Categorical breakdown -> Bar or Pie Chart
+        # 4. Categorical breakdown -> Bar or Pie Chart
         category_col = text_cols[0] if text_cols else None
         if category_col and numeric_cols:
             metric_col = numeric_cols[0]
@@ -106,8 +120,8 @@ class VisualizationService:
                 "data_payload": {"rows": rows},
             }
 
-        # 4. Multi-column detailed table
-        if len(columns) >= 3 and row_count > 1:
+        # 5. Multi-column detailed table (Fallback)
+        if len(columns) > 0:
             return {
                 "chart_type": "table",
                 "title": "Query Results Data Table",

@@ -81,9 +81,25 @@ export default function DashboardHeaderNav() {
 
   // ── Date Formatting Helpers ─────────────────────────────────
 
-  // Format Daily label: e.g. "10 Sep 2026"
+  const getTodayFormatted = () => {
+    const d = new Date();
+    const day = d.getDate();
+    const mIndex = d.getMonth();
+    const year = d.getFullYear();
+    return `${day < 10 ? "0" + day : day} ${MONTH_SHORT[mIndex] || ""} ${year}`;
+  };
+
+  const getTwoYearsAgoFormatted = () => {
+    const d = new Date();
+    const day = d.getDate();
+    const mIndex = d.getMonth();
+    const year = d.getFullYear() - 2;
+    return `${day < 10 ? "0" + day : day} ${MONTH_SHORT[mIndex] || ""} ${year}`;
+  };
+
+  // Format Daily label: e.g. "12 Sep 2026"
   const getDailyButtonLabel = () => {
-    if (!selectedDate) return "10 Sep 2026";
+    if (!selectedDate) return getTodayFormatted();
     const parts = selectedDate.split("-");
     if (parts.length !== 3) return selectedDate;
     const year = parts[0];
@@ -473,7 +489,7 @@ export default function DashboardHeaderNav() {
             <span>
               {granularity === "daily" && (
                 <>
-                  <strong>No transactions recorded for {getDailyButtonLabel()}.</strong> Data is populated from <strong>10 Sep 2024</strong> to <strong>10 Sep 2026</strong>.
+                  <strong>No transactions recorded for {getDailyButtonLabel()}.</strong> Data is populated from <strong>{getTwoYearsAgoFormatted()}</strong> to <strong>{getTodayFormatted()}</strong>.
                 </>
               )}
               {granularity === "monthly" && (
@@ -495,7 +511,7 @@ export default function DashboardHeaderNav() {
             onClick={resetToDefaultRange}
           >
             {granularity === "daily"
-              ? "Reset to Current Date (10 Sep 2026)"
+              ? `Reset to Current Date (${getTodayFormatted()})`
               : granularity === "monthly"
               ? "Reset to Current Month (Sep 2026)"
               : "Reset to This Year (2026)"}

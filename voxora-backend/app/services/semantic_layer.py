@@ -14,6 +14,7 @@ Dataset Path: `{dataset}`
 Tables:
 1. `{dataset}.orders`:
    - id: STRING (Primary key, e.g. 'ORD-00001')
+   - tenant_id: STRING (Tenant isolation key)
    - customer_id: STRING (Foreign key to customers.id)
    - product_id: STRING (Foreign key to products.id)
    - order_date: DATE / STRING (YYYY-MM-DD)
@@ -27,6 +28,7 @@ Tables:
 
 2. `{dataset}.products`:
    - id: STRING (Primary key, e.g. 'PROD-001')
+   - tenant_id: STRING (Tenant isolation key)
    - name: STRING (Product name, e.g. 'Voxora Enterprise AI Suite', 'Voxora Analytics Pro')
    - category: STRING ('Software', 'Hardware', 'Services')
    - subcategory: STRING ('Enterprise AI', 'BI & Analytics', 'Integrations', 'Compute', 'Consulting')
@@ -35,6 +37,7 @@ Tables:
 
 3. `{dataset}.customers`:
    - id: STRING (Primary key, e.g. 'CUST-001')
+   - tenant_id: STRING (Tenant isolation key)
    - name: STRING (Company name, e.g. 'Apex Corp', 'Vertex Technologies')
    - email: STRING
    - segment: STRING ('Enterprise', 'Mid-Market', 'SMB')
@@ -44,6 +47,7 @@ Tables:
 
 4. `{dataset}.daily_kpis`:
    - date: DATE / STRING (YYYY-MM-DD)
+   - tenant_id: STRING (Tenant isolation key)
    - total_revenue: FLOAT64 (Daily aggregate revenue in USD)
    - total_orders: INT64 (Daily order count)
    - avg_order_value: FLOAT64 (Average order value in USD)
@@ -61,18 +65,7 @@ Business Metric Definitions:
 - Units Sold: SUM(units)
 """
 
-RULES_FOR_SQL = """
-Rules for BigQuery SQL Generation:
-1. Use Google BigQuery Standard SQL dialect.
-2. ALWAYS use the full table path formatted with backticks: `{dataset}.<table_name>`.
-3. Use ROUND() on financial and percentage metrics to 2 decimal places.
-4. When filtering dates, format as 'YYYY-MM-DD'.
-5. When ranking or finding 'top' items, use ORDER BY ... DESC LIMIT N.
-6. For monthly trends, you can format date with SUBSTR(CAST(order_date AS STRING), 1, 7) or DATE_TRUNC(DATE(order_date), MONTH).
-7. Only generate SELECT queries. NEVER generate INSERT, UPDATE, DELETE, DROP, ALTER, or TRUNCATE statements.
-8. Always alias aggregate expressions clearly (e.g. `SUM(total_amount) AS total_revenue`).
-"""
-
+from datetime import date, timedelta
 
 class SemanticLayer:
     """Manages schema context and prompt generation for Text-to-SQL."""
@@ -80,10 +73,102 @@ class SemanticLayer:
     def get_dataset_path(self) -> str:
         return bigquery_client.full_dataset_path
 
+    def get_temporal_context(self) -> str:
+        # Explicitly calculate temporal anchors in UTC to avoid cross-timezone boundary issues.
+        from datetime import datetime, timezone
+        today = datetime.now(timezone.utc).date()
+        yesterday = today - timedelta(days=1)
+        today_str = today.isoformat()
+        yesterday_str = yesterday.isoformat()
+        current_year = today.year
+        current_month_str = today.strftime("%Y-%m")
+        current_month_name = today.strftime("%B %Y")
+
+        # Previous month
+        m1_year = today.year if today.month > 1 else today.year - 1
+        m1_month = today.month - 1 if today.month > 1 else 12
+        last_month_str = f"{m1_year:04d}-{m1_month:02d}"
+        last_month_name = date(m1_year, m1_month, 1).strftime("%B %Y")
+
+        # 2 months ago
+        m2_month = ((today.month - 1 - 2) % 12) + 1
+        m2_year = today.year if today.month > 2 else today.year - 1
+        m2_str = f"{m2_year:04d}-{m2_month:02d}"
+
+        # 3 months ago (for multi-month windows like June-September)
+        m3_month = ((today.month - 1 - 3) % 12) + 1
+        m3_year = today.year if today.month > 3 else today.year - 1
+        m3_str = f"{m3_year:04d}-{m3_month:02d}"
+        m3_start = f"{m3_str}-01"
+
+        dataset = self.get_dataset_path()
+
+        return f"""
+Temporal Guidelines & Date Handling (GROUND TRUTH AS OF TODAY):
+- TODAY'S DATE: '{today_str}' ({today.strftime("%A, %B %d, %Y")}).
+- YESTERDAY'S DATE: '{yesterday_str}'.
+- CURRENT MONTH: '{current_month_str}' ({current_month_name}).
+- LAST MONTH (1 MONTH AGO): '{last_month_str}' ({last_month_name}).
+- 2 MONTHS AGO: '{m2_str}'.
+- 3 MONTHS AGO: '{m3_str}' (Month start: '{m3_start}').
+- CURRENT YEAR: {current_year}.
+
+Rules for Temporal Queries:
+1. "Today" / "today's revenue" / "sales today":
+   - MUST filter for today's date: `WHERE order_date = '{today_str}'`
+   - Example:
+     ```sql
+     SELECT 
+       ROUND(SUM(total_amount), 2) AS total_revenue,
+       COUNT(*) AS total_orders,
+       ROUND(SUM(profit), 2) AS total_profit,
+       ROUND(AVG(total_amount), 2) AS avg_order_value
+     FROM `{dataset}.orders`
+     WHERE order_date = '{today_str}'
+     ```
+2. "Yesterday" / "yesterday's revenue":
+   - MUST filter for yesterday: `WHERE order_date = '{yesterday_str}'`
+3. "This month" / "current month" / "MTD" (Month to Date):
+   - MUST filter for '{current_month_str}': `WHERE SUBSTR(CAST(order_date AS STRING), 1, 7) = '{current_month_str}'`
+4. "Last month" / "previous month":
+   - MUST filter for '{last_month_str}': `WHERE SUBSTR(CAST(order_date AS STRING), 1, 7) = '{last_month_str}'`
+   - CRITICAL: Never use `ORDER BY month DESC LIMIT 1` for last month, as that returns current active month.
+5. "From this month to last 3 month revenue total in 2026" / "past 3 months to this month":
+   - This refers to the multi-month window covering 3 months prior up to and including current date ('{m3_str}' to '{today_str}', i.e. '{m3_start}' to '{today_str}').
+   - For total revenue, calculate the overall sum:
+     ```sql
+     SELECT 
+       ROUND(SUM(total_amount), 2) AS total_revenue,
+       COUNT(*) AS total_orders,
+       ROUND(SUM(profit), 2) AS total_profit,
+       ROUND(AVG(total_amount), 2) AS avg_order_value
+     FROM `{dataset}.orders`
+     WHERE order_date >= '{m3_start}' AND order_date <= '{today_str}'
+     ```
+   - For monthly breakdown or trend across these months:
+     ```sql
+     SELECT 
+       SUBSTR(CAST(order_date AS STRING), 1, 7) AS month,
+       ROUND(SUM(total_amount), 2) AS monthly_revenue,
+       COUNT(*) AS total_orders,
+       ROUND(SUM(profit), 2) AS total_profit
+     FROM `{dataset}.orders`
+     WHERE order_date >= '{m3_start}' AND order_date <= '{today_str}'
+     GROUP BY month
+     ORDER BY month
+     ```
+6. "Last 3 completed months" (excluding current partial month):
+   - Filter: `WHERE SUBSTR(CAST(order_date AS STRING), 1, 7) IN ('{m3_str}', '{m2_str}', '{last_month_str}')`
+7. "This year" / "YTD" / "in {current_year}":
+   - Filter: `WHERE SUBSTR(CAST(order_date AS STRING), 1, 4) = '{current_year}'` or `WHERE order_date >= '{current_year}-01-01' AND order_date <= '{today_str}'`
+8. "Last year" / "{current_year - 1}":
+   - Filter: `WHERE SUBSTR(CAST(order_date AS STRING), 1, 4) = '{current_year - 1}'`
+"""
+
     def get_system_prompt(self) -> str:
         dataset = self.get_dataset_path()
         tables = TABLE_DEFINITIONS.replace("{dataset}", dataset)
-        rules = RULES_FOR_SQL.replace("{dataset}", dataset)
+        temporal_context = self.get_temporal_context()
 
         return f"""You are Voxora AI's Chief Analytics Engineer.
 Your task is to translate business questions into accurate, high-performance Google BigQuery SQL queries.
@@ -93,7 +178,18 @@ Database Schema:
 
 {METRIC_DEFINITIONS}
 
-{rules}
+Rules for BigQuery SQL Generation:
+1. Use Google BigQuery Standard SQL dialect.
+2. ALWAYS use the full table path formatted with backticks: `{dataset}.<table_name>`.
+3. Use ROUND() on financial and percentage metrics to 2 decimal places.
+4. When filtering dates, format as 'YYYY-MM-DD'.
+5. When ranking or finding 'top' items, use ORDER BY ... DESC LIMIT N.
+6. For monthly aggregations, format date with SUBSTR(CAST(order_date AS STRING), 1, 7).
+7. Only generate SELECT queries. NEVER generate INSERT, UPDATE, DELETE, DROP, ALTER, or TRUNCATE statements.
+8. Always alias aggregate expressions clearly (e.g. `SUM(total_amount) AS total_revenue`).
+9. CRITICAL COST RULE: You MUST include a date-range or partition filter (e.g., `WHERE order_date >= ...`) on EVERY query to prevent full table scans. If the user does not specify a date, default to the last 30 days or the current month.
+
+{temporal_context}
 
 Output Format:
 Return ONLY the raw SQL query inside a ```sql ... ``` code block.

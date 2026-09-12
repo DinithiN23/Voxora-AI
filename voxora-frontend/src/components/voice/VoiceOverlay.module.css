@@ -132,28 +132,37 @@
   color: var(--vx-text-primary);
 }
 
-.btnSend {
-  background: var(--vx-brand-gradient);
-  border: none;
-  color: white;
+.autoSendHint {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: var(--vx-text-xs);
-  font-weight: 600;
-  padding: 5px 14px;
-  border-radius: var(--vx-radius-md);
-  cursor: pointer;
-  box-shadow: var(--vx-glow-primary);
-  transition: all var(--vx-duration-fast) var(--vx-ease);
+  color: var(--vx-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.btnSend:hover:not(:disabled) {
-  transform: translateY(-1px);
-  filter: brightness(1.1);
+.autoSendDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vx-brand-primary, #3b82f6);
+  box-shadow: 0 0 6px var(--vx-brand-primary, #3b82f6);
+  animation: pulseDot 1.5s infinite ease-in-out;
+  flex-shrink: 0;
 }
 
-.btnSend:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
+@keyframes pulseDot {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
 .btnBargeIn {

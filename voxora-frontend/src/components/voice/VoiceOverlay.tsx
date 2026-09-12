@@ -10,7 +10,6 @@ interface VoiceOverlayProps {
   interimTranscript: string;
   analyser: AnalyserNode | null;
   onCancel: () => void;
-  onSend: () => void;
   onBargeIn: () => void;
 }
 
@@ -21,7 +20,6 @@ export default function VoiceOverlay({
   interimTranscript,
   analyser,
   onCancel,
-  onSend,
   onBargeIn,
 }: VoiceOverlayProps) {
   if (!isListening && !isSpeaking) return null;
@@ -80,38 +78,34 @@ export default function VoiceOverlay({
               <span className={styles.interimText}>"{currentDisplay}"</span>
             ) : (
               <span className={styles.placeholderText}>
-                Listening... Say a question like "Show monthly revenue trends"
+                Listening to your voice... Speak naturally.
               </span>
             )
           ) : (
             <span className={styles.placeholderText}>
-              Reading executive briefing aloud. Tap "Barge-in" to interrupt anytime.
+              Reading answer aloud. Tap "Barge-in" to interrupt and speak anytime.
             </span>
           )}
         </div>
 
-        {/* Action controls */}
+        {/* Action controls & Auto-send hint */}
         {isListening && (
           <div className={styles.actionsRow}>
+            <div className={styles.autoSendHint}>
+              <span className={styles.autoSendDot} />
+              <span>
+                {currentDisplay.trim()
+                  ? "Speaking detected • Pausing will automatically send"
+                  : "Listening... System sends automatically when you stop speaking"}
+              </span>
+            </div>
             <button
               type="button"
               className={styles.btnCancel}
               onClick={onCancel}
+              title="Cancel voice input"
             >
               Cancel
-            </button>
-            <button
-              type="button"
-              className={styles.btnSend}
-              onClick={onSend}
-              disabled={!currentDisplay.trim()}
-              style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}
-            >
-              <span>Send Query</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="22" y1="2" x2="11" y2="13"/>
-                <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-              </svg>
             </button>
           </div>
         )}

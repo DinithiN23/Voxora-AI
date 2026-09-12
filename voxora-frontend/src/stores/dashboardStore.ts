@@ -27,6 +27,7 @@ export interface KPICard {
   trend: "up" | "down" | "neutral";
   icon: string;
   color: string;
+  period_label?: string;
 }
 
 export interface ChartWidget {
@@ -70,30 +71,40 @@ interface DashboardState {
 
 /* ── Store ──────────────────────────────────────────────────── */
 
-export const useDashboardStore = create<DashboardState>((set, get) => ({
-  currentPage: "executive",
-  granularity: "yearly",
-  timeRange: "2026",
-  selectedDate: "2026-09-10",
-  selectedMonth: { year: 2026, month: 8 },
-  selectedYear: 2026,
-  startDate: "2026-01-01",
-  endDate: "2026-12-31",
-  data: null,
-  isLoading: false,
-  error: null,
+const getTodayDateStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
-  selectDaily: async (dateStr?: string) => {
-    const targetDate = dateStr || get().selectedDate || "2026-09-10";
-    set({
-      granularity: "daily",
-      selectedDate: targetDate,
-      startDate: targetDate,
-      endDate: targetDate,
-      timeRange: "daily",
-    });
-    await get().fetchDashboard();
-  },
+export const useDashboardStore = create<DashboardState>((set, get) => {
+  const todayStr = getTodayDateStr();
+  return {
+    currentPage: "executive",
+    granularity: "yearly",
+    timeRange: "2026",
+    selectedDate: todayStr,
+    selectedMonth: { year: 2026, month: 8 },
+    selectedYear: 2026,
+    startDate: "2026-01-01",
+    endDate: "2026-12-31",
+    data: null,
+    isLoading: false,
+    error: null,
+
+    selectDaily: async (dateStr?: string) => {
+      const targetDate = dateStr || get().selectedDate || getTodayDateStr();
+      set({
+        granularity: "daily",
+        selectedDate: targetDate,
+        startDate: targetDate,
+        endDate: targetDate,
+        timeRange: "daily",
+      });
+      await get().fetchDashboard();
+    },
 
   selectMonthly: async (year?: number, month?: number) => {
     const targetYear = year ?? get().selectedMonth.year ?? 2026;
@@ -151,7 +162,7 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   resetToDefaultRange: async () => {
     const g = get().granularity;
     if (g === "daily") {
-      await get().selectDaily("2026-09-10");
+      await get().selectDaily(getTodayDateStr());
     } else if (g === "monthly") {
       await get().selectMonthly(2026, 8);
     } else {
@@ -192,4 +203,5 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   refreshDashboard: async () => {
     await get().fetchDashboard();
   },
-}));
+  };
+});
