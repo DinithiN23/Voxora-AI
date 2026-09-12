@@ -13,7 +13,11 @@ from typing import Any
 
 import httpx
 from collections.abc import AsyncGenerator
-from groq import AsyncGroq, Groq
+try:
+    from groq import AsyncGroq, Groq
+except ImportError:
+    AsyncGroq = None  # type: ignore[assignment,misc]
+    Groq = None  # type: ignore[assignment,misc]
 
 from app.config import get_settings
 
