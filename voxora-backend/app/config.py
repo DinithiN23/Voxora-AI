@@ -63,7 +63,7 @@ class Settings(BaseSettings):
     bigquery_dataset: str = ""
 
     # CORS
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: str | list[str] = ["http://localhost:3000"]
 
     @field_validator("database_url", mode="before")
     @classmethod
@@ -95,10 +95,15 @@ class Settings(BaseSettings):
             import json
 
             try:
-                return json.loads(v)
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(origin).strip() for origin in parsed if str(origin).strip()]
+                return [str(parsed).strip()]
             except (json.JSONDecodeError, TypeError):
-                return [origin.strip() for origin in v.split(",")]
-        return v
+                return [origin.strip() for origin in v.split(",") if origin.strip()]
+        elif isinstance(v, list):
+            return [str(origin).strip() for origin in v if str(origin).strip()]
+        return ["*"]
 
     def model_post_init(self, __context: Any) -> None:
         import os
