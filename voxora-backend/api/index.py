@@ -1,6 +1,6 @@
 """
 Vercel Serverless Function Entry Point for FastAPI.
-Exposes 'app' for Vercel's Python runtime.
+Exposes 'app' and 'handler' for Vercel's Python runtime.
 """
 
 import os
@@ -12,3 +12,9 @@ if backend_root not in sys.path:
     sys.path.insert(0, backend_root)
 
 from app.main import app
+
+try:
+    from mangum import Mangum
+    handler = Mangum(app, lifespan="off")
+except ImportError:
+    handler = app
