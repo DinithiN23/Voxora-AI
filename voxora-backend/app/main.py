@@ -73,10 +73,15 @@ def create_app() -> FastAPI:
         import logging
         import traceback
         logging.getLogger(__name__).error("Unhandled exception: %s", traceback.format_exc())
+        origin = request.headers.get("origin", "*")
         from fastapi.responses import JSONResponse
         return JSONResponse(
             status_code=500,
             content={"detail": f"Server error: {str(exc)}"},
+            headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+            },
         )
 
     return app
