@@ -30,33 +30,12 @@ class BigQueryClient:
             if not project:
                 raise ValueError("BIGQUERY_PROJECT is not configured in environment.")
 
-            credentials = None
-            
-            # Check for JSON string environment variable first (Vercel serverless approach)
-            gcp_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-            if gcp_json:
-                import json
-                from google.oauth2 import service_account
-                try:
-                    # Vercel sometimes double-escapes newlines in environment variables
-                    if "\\n" in gcp_json and "\\\\n" not in gcp_json:
-                        gcp_json = gcp_json.replace("\\n", "\n")
-                    
-                    cred_info = json.loads(gcp_json)
-                    credentials = service_account.Credentials.from_service_account_info(cred_info)
-                except Exception as e:
-                    logger.error(f"Failed to parse GOOGLE_CREDENTIALS_JSON: {e}")
-
-            # Fallback to local file path
-            if not credentials:
-                cred_path = self.settings.google_application_credentials
-                if cred_path and os.path.exists(cred_path):
-                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(cred_path)
+            from app.integrations.gcp import get_gcp_credentials
+            credentials = get_gcp_credentials()
 
             if credentials:
                 self._client = bigquery.Client(project=project, credentials=credentials)
             else:
-                # Default to environment/metadata server (will likely fail on Vercel)
                 self._client = bigquery.Client(project=project)
 
         return self._client

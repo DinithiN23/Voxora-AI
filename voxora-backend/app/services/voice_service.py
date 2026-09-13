@@ -21,26 +21,8 @@ class VoiceService:
         self.settings = get_settings()
 
     def _get_credentials(self):
-        import json
-        from google.oauth2 import service_account
-        gcp_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
-        if gcp_json:
-            try:
-                # Vercel sometimes double-escapes newlines in environment variables
-                if "\\n" in gcp_json and "\\\\n" not in gcp_json:
-                    gcp_json = gcp_json.replace("\\n", "\n")
-                    
-                cred_info = json.loads(gcp_json)
-                return service_account.Credentials.from_service_account_info(cred_info)
-            except Exception as e:
-                logger.error(f"Failed to parse GOOGLE_CREDENTIALS_JSON: {e}")
-        
-        cred_path = self.settings.google_application_credentials
-        if cred_path and os.path.exists(cred_path):
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(cred_path)
-            return None # Default credentials will use the env var we just set
-            
-        return None
+        from app.integrations.gcp import get_gcp_credentials
+        return get_gcp_credentials()
 
     def _get_tts_client(self) -> texttospeech.TextToSpeechClient | None:
         try:

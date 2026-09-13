@@ -66,7 +66,17 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["System"])
     async def health_check():
-        return {"status": "healthy", "service": "voxora-backend", "version": "0.1.0"}
+        import os
+        from app.integrations.gcp import get_gcp_credentials
+        creds = get_gcp_credentials()
+        detected = [k for k in os.environ.keys() if any(x in k.upper() for x in ("GCP", "GOOGLE", "BIGQUERY"))]
+        return {
+            "status": "healthy",
+            "service": "voxora-backend",
+            "version": "0.1.0",
+            "gcp_credentials_loaded": bool(creds),
+            "detected_gcp_env_keys": detected,
+        }
 
     @app.exception_handler(Exception)
     async def global_exception_handler(request, exc):
