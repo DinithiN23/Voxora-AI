@@ -69,13 +69,30 @@ def create_app() -> FastAPI:
         import os
         from app.integrations.gcp import get_gcp_credentials
         creds = get_gcp_credentials()
-        detected = [k for k in os.environ.keys() if any(x in k.upper() for x in ("GCP", "GOOGLE", "BIGQUERY"))]
+        detected_gcp = [k for k in os.environ.keys() if any(x in k.upper() for x in ("GCP", "GOOGLE", "BIGQUERY"))]
+        detected_llm = [k for k in os.environ.keys() if any(x in k.upper() for x in ("GROQ", "GEMINI", "OPENAI", "LLM"))]
+
+        llm_status = "untested"
+        llm_error = None
+        try:
+            from app.services.llm_service import llm_service
+            resp, prov = await llm_service.generate_response([{"role": "user", "content": "ping"}])
+            llm_status = f"ok ({prov})"
+        except Exception as e:
+            llm_status = "failed"
+            llm_error = str(e)
+
         return {
             "status": "healthy",
             "service": "voxora-backend",
             "version": "0.1.0",
             "gcp_credentials_loaded": bool(creds),
-            "detected_gcp_env_keys": detected,
+            "detected_gcp_env_keys": detected_gcp,
+            "detected_llm_env_keys": detected_llm,
+            "llm_test": {
+                "status": llm_status,
+                "error": llm_error,
+            },
         }
 
     @app.exception_handler(Exception)

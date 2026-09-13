@@ -93,34 +93,44 @@ class LLMService:
     ) -> tuple[str, str]:
         """Generate a response using the configured primary provider with automatic fallback. Returns (response_text, provider)."""
         prompt = system_prompt or get_default_system_prompt()
-        primary = (self.settings.llm_provider or "groq").lower()
+        settings = get_settings()
+        groq_key = (settings.groq_api_key or os.environ.get("GROQ_API_KEY") or "").strip()
+        gemini_key = (settings.gemini_api_key or os.environ.get("GEMINI_API_KEY") or "").strip()
+        primary = (settings.llm_provider or os.environ.get("LLM_PROVIDER") or "groq").strip().lower()
 
-        if primary == "groq" and self.settings.groq_api_key:
+        # If primary is groq and we have a groq key, try groq first
+        if primary == "groq" and groq_key:
             try:
                 res = await self._call_groq(messages, prompt)
                 return res, "groq"
-            except GROQ_KNOWN_EXCEPTIONS as e:
-                logger.warning("Groq failed (%s: %s). Falling back to Gemini...", type(e).__name__, e)
-                if self.settings.gemini_api_key:
-                    res = await self._call_gemini(messages, prompt)
-                    return res, "gemini"
-                raise
             except Exception as e:
-                logger.warning("Groq failed with unclassified_error (%s). Falling back to Gemini...", e)
-                if self.settings.gemini_api_key:
-                    res = await self._call_gemini(messages, prompt)
-                    return res, "gemini"
+                logger.warning("Groq failed (%s: %s). Falling back to Gemini...", type(e).__name__, e)
+                if gemini_key:
+                    try:
+                        res = await self._call_gemini(messages, prompt)
+                        return res, "gemini"
+                    except Exception as ge:
+                        logger.error("Gemini fallback also failed: %s", ge)
                 raise
-        else:
+        # Otherwise if gemini is primary or groq has no key, try gemini
+        elif gemini_key:
             try:
                 res = await self._call_gemini(messages, prompt)
                 return res, "gemini"
             except Exception as e:
                 logger.warning("Gemini failed (%s). Falling back to Groq...", e)
-                if self.settings.groq_api_key:
-                    res = await self._call_groq(messages, prompt)
-                    return res, "groq"
+                if groq_key:
+                    try:
+                        res = await self._call_groq(messages, prompt)
+                        return res, "groq"
+                    except Exception as gre:
+                        logger.error("Groq fallback also failed: %s", gre)
                 raise
+        elif groq_key:
+            res = await self._call_groq(messages, prompt)
+            return res, "groq"
+        else:
+            raise ValueError("Neither GROQ_API_KEY nor GEMINI_API_KEY is configured.")
 
     async def stream_response(
         self,
@@ -129,9 +139,12 @@ class LLMService:
     ) -> AsyncGenerator[str, None]:
         """Stream tokens using Groq (or fallback). Yields string chunks."""
         prompt = system_prompt or get_default_system_prompt()
-        primary = (self.settings.llm_provider or "groq").lower()
+        settings = get_settings()
+        groq_key = (settings.groq_api_key or os.environ.get("GROQ_API_KEY") or "").strip()
+        gemini_key = (settings.gemini_api_key or os.environ.get("GEMINI_API_KEY") or "").strip()
+        primary = (settings.llm_provider or os.environ.get("LLM_PROVIDER") or "groq").strip().lower()
 
-        if primary == "groq" and self.settings.groq_api_key:
+        if primary == "groq" and groq_key:
             try:
                 async for chunk in self._stream_groq(messages, prompt):
                     yield chunk
@@ -142,7 +155,6 @@ class LLMService:
         # Fallback: non-streaming call, yield chunks
         try:
             full_text, _ = await self.generate_response(messages, prompt)
-            # Yield in smaller word chunks to simulate smooth flow
             words = full_text.split(" ")
             for i, word in enumerate(words):
                 yield word + (" " if i < len(words) - 1 else "")
