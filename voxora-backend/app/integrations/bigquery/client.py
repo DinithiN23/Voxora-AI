@@ -38,6 +38,10 @@ class BigQueryClient:
                 import json
                 from google.oauth2 import service_account
                 try:
+                    # Vercel sometimes double-escapes newlines in environment variables
+                    if "\\n" in gcp_json and "\\\\n" not in gcp_json:
+                        gcp_json = gcp_json.replace("\\n", "\n")
+                    
                     cred_info = json.loads(gcp_json)
                     credentials = service_account.Credentials.from_service_account_info(cred_info)
                 except Exception as e:
