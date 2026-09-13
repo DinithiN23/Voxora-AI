@@ -220,7 +220,7 @@ async def send_message(
         effective_prompt = agent_studio_service.build_effective_system_prompt(agent_cfg)
         ai_response_text, provider = await llm_service.generate_response(chat_history, system_prompt=effective_prompt)
     except Exception:
-        ai_response_text = _generate_placeholder_response(request.content)
+        ai_response_text = "I encountered a connection error and could not complete your request. Please try again."
 
     ai_message = Message(
         conversation_id=conversation.id,
@@ -389,7 +389,7 @@ async def send_message_stream(
                             yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
                     except Exception as stream_err:
                         logger.error("Streaming error: %s", stream_err)
-                        fallback_chunk = _generate_placeholder_response(request.content)
+                        fallback_chunk = "I encountered a connection error and could not complete your request. Please try again."
                         collected_chunks.append(fallback_chunk)
                         yield f"data: {json.dumps({'type': 'token', 'token': fallback_chunk})}\n\n"
 
@@ -540,100 +540,6 @@ async def archive_conversation(
     conversation.status = "archived"
     await db.flush()
 
-
-def _generate_placeholder_response(question: str) -> str:
-    """Context-aware fallback response when live LLM stream is unreachable."""
-    q = question.lower().strip()
-
-    # 1. Greetings & Common Conversational Questions
-    if any(greet in q for greet in ("hello", "hi", "hey", "good morning", "good afternoon", "how are you", "who are you", "what can you do")):
-        return (
-            "Hello! I am **Voxora AI**, your Conversational Business Intelligence copilot connected directly to Google BigQuery.\n\n"
-            "I can help you:\n"
-            "- Analyze **revenue & sales trends** (e.g., *'What was last month's revenue?'*)\n"
-            "- Discover **top products & high-growth categories**\n"
-            "- Break down **regional performance** across Eastern, Western, Central, and Southern regions\n"
-            "- Generate **real-time dynamic charts and SQL audit logs**\n\n"
-            "How can I assist your business analysis today?"
-        )
-
-    # 2. Out-of-Context / Irrelevant Fallback & Escalation
-    if any(off_topic in q for off_topic in (
-        "recipe", "cake", "cook", "game", "movie", "film", "actor", "song", "music",
-        "football", "cricket", "basketball", "weather", "forecast", "joke", "story",
-        "poem", "president", "politics", "dating", "homework"
-    )):
-        return (
-            "I am **Voxora AI**, your specialized business intelligence copilot. I focus exclusively on your organization's "
-            "revenue metrics, sales trends, product analytics, and Google BigQuery data.\n\n"
-            "I cannot assist with queries outside this domain. However, I would be delighted to help you explore:\n"
-            "- Sales trends and monthly comparisons\n"
-            "- Top-performing products or customer cohorts\n"
-            "- Regional revenue breakdowns\n\n"
-            "*If you need general technical assistance or administrative support, please contact your organization administrator.*"
-        )
-
-    # 3. Last Month Revenue (August 2026)
-    if "last month" in q and ("revenue" in q or "sales" in q or "total" in q or "august" in q):
-        return (
-            "Based on Google BigQuery analytics data, **August 2026 (last month) total revenue was $1,188,100 ($1.19M)**, "
-            "representing our highest completed month of Q3 with **3,842 orders**.\n\n"
-            "Key August Highlights:\n"
-            "- **Average Order Value**: $309.24\n"
-            "- **Month-over-Month Growth**: **+10.8%** compared to July ($1.07M)\n"
-            "- **Top Sales Region**: Eastern Region ($412K)\n"
-            "- **Top Product Line**: Voxora Enterprise AI Suite ($430K)"
-        )
-
-    # 4. Today / This Month Revenue (September 2026 MTD)
-    if ("today" in q or "this month" in q or "current month" in q or "september" in q) and ("revenue" in q or "sales" in q):
-        return (
-            "Based on Google BigQuery analytics data, **September 2026 (Month-to-Date) revenue is currently tracking at $441,500 ($441.5K)** "
-            "across **1,420 orders** as of September 10, 2026.\n\n"
-            "Key Highlights:\n"
-            "- **Latest Single-Day Revenue (Sep 10)**: $62,350\n"
-            "- **Daily Average**: ~$44,150 / day\n"
-            "- **Projected Month-End Close**: $1.25M - $1.32M\n"
-            "- **Strongest Channel**: Direct Sales (48% of total volume)"
-        )
-
-    # 5. Top Products
-    elif "top" in q and "product" in q:
-        return (
-            "Here are the **top-selling products** based on BigQuery order data:\n\n"
-            "| Rank | Product | Category | Units Sold | Revenue |\n"
-            "|------|---------|----------|------------|---------|\n"
-            "| 1 | Voxora Enterprise AI Suite | Software | 1,450 | **$450,000** |\n"
-            "| 2 | Cloud Storage Pro | Infrastructure | 1,220 | **$320,000** |\n"
-            "| 3 | API Gateway Standard | Services | 940 | **$210,000** |\n"
-            "| 4 | Security & Compliance Pack | Software | 680 | **$185,000** |\n"
-            "| 5 | Analytics Dashboard Pro | Software | 520 | **$145,000** |\n\n"
-            "**Voxora Enterprise AI Suite** is the leading revenue driver, contributing **34.3%** of product gross sales."
-        )
-
-    # 6. Comparisons / MoM
-    elif "compare" in q or "growth" in q or "trend" in q:
-        return (
-            "Comparing **August 2026** with **July 2026** performance:\n\n"
-            "| Metric | August 2026 | July 2026 | Variance |\n"
-            "|--------|-------------|-----------|----------|\n"
-            "| Revenue | **$1.19M** | $1.07M | **↑ +10.8%** |\n"
-            "| Orders | **3,842** | 3,510 | **↑ +9.5%** |\n"
-            "| Avg Order Value | **$309** | $305 | **↑ +1.3%** |\n"
-            "| Gross Margin % | **58.4%** | 57.1% | **↑ +1.3 pts** |\n\n"
-            "Revenue growth was primarily fueled by accelerated Enterprise AI adoption in the Eastern and Central regions."
-        )
-
-    # 7. General Analytical Fallback
-    else:
-        return (
-            "Based on Google BigQuery analytics data for your organization:\n\n"
-            "- **Year-to-Date (2026) Total Revenue**: **$9,852,400 ($9.85M)**\n"
-            "- **Active Customer Accounts**: 1,240 enterprise accounts\n"
-            "- **Overall Profit Margin**: **58.4%**\n"
-            "- **Primary Growth Driver**: Eastern Region (+18.4% YoY)\n\n"
-            "Would you like to drill deeper into revenue breakdown by region, product line, or customer tier?"
-        )
 
 
 def _generate_suggestions(question: str) -> list[str]:
