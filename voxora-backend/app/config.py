@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     # BigQuery
     bigquery_project: str = ""
     bigquery_dataset: str = ""
+    bigquery_max_bytes_billed: int = 100 * 1024 * 1024  # Cap at 100 MB per query to prevent runaway costs
 
     # CORS
     cors_origins: str | list[str] = ["http://localhost:3000"]

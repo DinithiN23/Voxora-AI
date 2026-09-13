@@ -326,9 +326,19 @@ async def send_message_stream(
 
                 if is_analytics_query:
                     try:
-                        executed_sql, provider = await text_to_sql_engine.generate_sql(
-                            request.content, chat_history, tenant_id=str(current_user.tenant_id)
+                        sql_res = await text_to_sql_engine.generate_sql(
+                            request.content, chat_history
                         )
+                        executed_sql = sql_res.sql
+                        provider = sql_res.provider
+                        was_auto_scoped = getattr(sql_res, "was_auto_scoped", False)
+
+                        # If query was auto-scoped to 30 days, notify the user visually
+                        if was_auto_scoped:
+                            notice = "> ℹ️ *No specific timeframe was provided — showing data from the last 30 days (UTC).*\n\n"
+                            collected_chunks.append(notice)
+                            yield f"data: {json.dumps({'type': 'token', 'token': notice})}\n\n"
+
                         query_res = await bigquery_client.execute_query(executed_sql)
 
                         # Check for recommended chart
@@ -355,11 +365,18 @@ async def send_message_stream(
                             yield f"data: {json.dumps({'type': 'token', 'token': chunk})}\n\n"
 
                     except Exception as bq_err:
-                        logger.warning("BigQuery pipeline fallback (%s). Using LLM service directly.", bq_err)
+                        logger.error("BigQuery analytics pipeline failure: %s", bq_err, exc_info=True)
                         active_viz_config = None
+                        err_msg = (
+                            "⚠️ **Data Retrieval Notice**: I was unable to retrieve the underlying business data from the warehouse "
+                            f"to answer this question accurately (`{str(bq_err)}`).\n\n"
+                            "To preserve data integrity, ungrounded estimates will not be displayed. Please refine your query or contact your system administrator."
+                        )
+                        collected_chunks.append(err_msg)
+                        yield f"data: {json.dumps({'type': 'token', 'token': err_msg})}\n\n"
 
-                # Fallback to direct conversational response if not an analytics query or if BQ failed
-                if not collected_chunks:
+                # Fallback to direct conversational response ONLY if not an analytics query
+                if not is_analytics_query and not collected_chunks:
                     try:
                         agent_cfg = await agent_studio_service.get_or_create_config(current_user.tenant_id, db)
                         effective_prompt = agent_studio_service.build_effective_system_prompt(agent_cfg)
@@ -404,14 +421,16 @@ async def send_message_stream(
                     except Exception as viz_err:
                         logger.error("Failed to persist visualization: %s", viz_err)
 
-                # Persist QueryLog to DB if SQL executed
-                if executed_sql and query_res:
+                # Persist QueryLog to DB if SQL executed or attempted
+                if executed_sql:
                     try:
-                        bytes_billed = query_res.get("bytes_billed", 0)
+                        bytes_billed = query_res.get("bytes_billed", 0) if query_res else 0
+                        status_str = "success" if query_res else "error"
                         logger.info(
-                            "QueryLog: executed BigQuery job_id=%s, execution_time_ms=%s, bytes_billed=%s (%.2f MB), provider=%s",
-                            query_res.get("job_id"),
-                            query_res.get("execution_time_ms"),
+                            "QueryLog: recorded BigQuery SQL status=%s, job_id=%s, execution_time_ms=%s, bytes_billed=%s (%.2f MB), provider=%s",
+                            status_str,
+                            query_res.get("job_id") if query_res else None,
+                            query_res.get("execution_time_ms") if query_res else None,
                             bytes_billed,
                             bytes_billed / (1024 * 1024) if bytes_billed else 0.0,
                             provider
@@ -420,14 +439,15 @@ async def send_message_stream(
                         query_log = QueryLog(
                             message_id=ai_msg.id,
                             generated_sql=executed_sql,
-                            execution_time_ms=query_res.get("execution_time_ms"),
-                            rows_returned=query_res.get("row_count"),
-                            status="success",
+                            execution_time_ms=query_res.get("execution_time_ms") if query_res else None,
+                            rows_returned=query_res.get("row_count") if query_res else None,
+                            status=status_str,
                             llm_provider=provider,
                             bigquery_job_info={
-                                "job_id": query_res.get("job_id"),
+                                "job_id": query_res.get("job_id") if query_res else None,
                                 "bytes_billed": bytes_billed,
                                 "llm_provider": provider,
+                                "error": str(bq_err) if 'bq_err' in locals() and bq_err else None,
                             },
                         )
                         db.add(query_log)

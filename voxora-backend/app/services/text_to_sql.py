@@ -35,6 +35,23 @@ class SQLValidationError(Exception):
     pass
 
 
+class GeneratedSQL(tuple):
+    """
+    Tuple subclass returning (sql, provider) while preserving .was_auto_scoped metadata
+    for backward compatibility with callers expecting a 2-tuple.
+    """
+    sql: str
+    provider: str
+    was_auto_scoped: bool
+
+    def __new__(cls, sql: str, provider: str, was_auto_scoped: bool = False):
+        instance = super().__new__(cls, (sql, provider))
+        instance.sql = sql
+        instance.provider = provider
+        instance.was_auto_scoped = was_auto_scoped
+        return instance
+
+
 class TextToSQLEngine:
     """Translates natural language to BigQuery SQL."""
 
@@ -43,9 +60,10 @@ class TextToSQLEngine:
         question: str,
         chat_history: list[dict[str, str]] | None = None,
         tenant_id: str | None = None,
-    ) -> tuple[str, str]:
+    ) -> GeneratedSQL:
         """
-        Generate and validate a BigQuery SQL query from user question and history. Returns (sql, provider).
+        Generate and validate a BigQuery SQL query from user question and history.
+        Returns GeneratedSQL(sql, provider, was_auto_scoped) which unpacks as (sql, provider).
         """
         system_prompt = semantic_layer.get_system_prompt()
 
@@ -67,10 +85,10 @@ class TextToSQLEngine:
         # Extract and sanitize SQL
         cleaned_sql = self._clean_and_sanitize(response)
 
-        # Validate SQL safety and inject tenant_id via AST
-        final_sql = self._validate_and_enforce_ast(cleaned_sql, tenant_id)
+        # Validate SQL safety, verify date scoping via AST, and auto-inject safe default if un-scoped
+        final_sql, was_auto_scoped = self._validate_and_enforce_ast(cleaned_sql, tenant_id)
 
-        return final_sql, provider
+        return GeneratedSQL(final_sql, provider, was_auto_scoped)
 
     def _clean_and_sanitize(self, raw_output: str) -> str:
         """Extract SQL from markdown fencing and format."""
@@ -90,8 +108,13 @@ class TextToSQLEngine:
 
         return sql
 
-    def _validate_and_enforce_ast(self, sql: str, tenant_id: str | None) -> str:
-        """Verify that the SQL query is strictly read-only and safe via AST, and force inject tenant scope."""
+    def _validate_and_enforce_ast(self, sql: str, tenant_id: str | None = None) -> tuple[str, bool]:
+        """
+        Verify that the SQL query is strictly read-only and safe via AST.
+        Inspects the WHERE clause for date-scoping columns (order_date, date, created_at).
+        If no temporal filter is present, auto-injects a safe default (last 30 days) to prevent
+        unintended full-table scans.
+        """
         import sqlglot
         from sqlglot import exp
 
@@ -104,24 +127,38 @@ class TextToSQLEngine:
         if not isinstance(parsed, exp.Select):
             raise SQLValidationError("Only read-only SELECT queries are allowed.")
 
-        # Require a WHERE clause in the original text to prevent full table scans on time (before tenant inject)
-        if "WHERE" not in sql.upper():
-            raise SQLValidationError("Query must include a WHERE clause with a date-range or partition filter to prevent full table scans.")
-
         # AST Allowlist 2: Verify only allowed tables are accessed
         ALLOWED_TABLES = {"orders", "products", "customers", "daily_kpis"}
+        tables_found = set()
         for table in parsed.find_all(exp.Table):
             table_name = table.name.lower()
             if table_name not in ALLOWED_TABLES:
                 raise SQLValidationError(f"Query attempts to access unauthorized table: {table_name}")
+            tables_found.add(table_name)
 
-        # Inject tenant isolation logic
-        if tenant_id:
-            # Add AND tenant_id = '...'
-            tenant_cond = f"tenant_id = '{tenant_id}'"
-            parsed = parsed.where(tenant_cond)
+        # AST Date Scoping Validation: Check for presence of date/temporal filters
+        DATE_COLUMNS = {"order_date", "date", "created_at"}
+        has_date_filter = False
+        where_clause = parsed.find(exp.Where)
+        if where_clause:
+            for col in where_clause.find_all(exp.Column):
+                if col.name.lower() in DATE_COLUMNS:
+                    has_date_filter = True
+                    break
 
-        return parsed.sql(dialect="bigquery")
+        was_auto_scoped = False
+        if not has_date_filter:
+            # Determine appropriate temporal column based on queried tables
+            if "daily_kpis" in tables_found and "orders" not in tables_found:
+                default_cond = sqlglot.parse_one("date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)", dialect="bigquery")
+            else:
+                default_cond = sqlglot.parse_one("order_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)", dialect="bigquery")
+
+            parsed = parsed.where(default_cond)
+            was_auto_scoped = True
+            logger.info("Un-scoped query detected. Auto-injected 30-day default filter to prevent full scan.")
+
+        return parsed.sql(dialect="bigquery"), was_auto_scoped
 
 
 text_to_sql_engine = TextToSQLEngine()

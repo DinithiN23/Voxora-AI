@@ -57,9 +57,10 @@ class BigQueryClient:
             client = self.get_client()
             start_time = time.perf_counter()
 
+            max_bytes = self.settings.bigquery_max_bytes_billed or (100 * 1024 * 1024)
             job_config = bigquery.QueryJobConfig(
                 use_query_cache=True,
-                maximum_bytes_billed=100 * 1024 * 1024,  # Cap at 100 MB per query to prevent runaway costs
+                maximum_bytes_billed=max_bytes,  # Cap query scan bytes to prevent runaway billing
             )
             query_job = client.query(sql, job_config=job_config, timeout=timeout_seconds)
             results = query_job.result()
