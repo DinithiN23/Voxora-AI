@@ -342,8 +342,9 @@ export const useAgentStudioStore = create<AgentStudioState>((set, get) => ({
         await audio.play();
         return;
       }
-    } catch {
+    } catch (e) {
       // Backend synthesis fallback
+      set({ statusMessage: { type: "info", text: "Backend voice synthesis unavailable. Falling back to browser speech." } });
     }
 
     // Client-side Web Speech API fallback
