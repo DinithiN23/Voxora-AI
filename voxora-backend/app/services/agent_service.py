@@ -300,13 +300,14 @@ class AgentStudioService:
         ]
 
         try:
-            response_text = await llm_service.generate_response(
+            response_text, provider = await llm_service.generate_response(
                 messages=messages,
                 system_prompt=effective_prompt,
             )
         except Exception as e:
             logger.error("Sandbox test error: %s", e)
-            response_text = f"**Executive Briefing (Simulated)**: In response to '{request.question}', performance metrics indicate positive momentum with $2.22M total revenue and a 59.4% gross margin. [Note: Live provider failover active: {e}]"
+            response_text = "Error: Failed to generate response from the analytics engine. Please check your configuration and try again."
+            provider = "error"
 
         latency = int((time.time() - start_time) * 1000)
 
@@ -314,7 +315,7 @@ class AgentStudioService:
             response=response_text,
             persona_applied="Custom Studio Sandbox",
             tone_applied=tone,
-            model_used=llm_service.settings.llm_provider or "groq",
+            model_used=provider,
             latency_ms=latency,
         )
 
