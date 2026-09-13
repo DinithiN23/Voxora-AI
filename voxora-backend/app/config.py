@@ -66,11 +66,29 @@ class Settings(BaseSettings):
     # CORS
     cors_origins: str | list[str] = ["http://localhost:3000"]
 
+    @field_validator(
+        "bigquery_project",
+        "bigquery_dataset",
+        "google_cloud_project",
+        "secret_key",
+        "jwt_secret_key",
+        "groq_api_key",
+        "gemini_api_key",
+        "openai_api_key",
+        mode="before",
+    )
+    @classmethod
+    def strip_whitespace(cls, v: Any) -> Any:
+        if isinstance(v, str):
+            return v.strip()
+        return v
+
     @field_validator("database_url", mode="before")
     @classmethod
     def parse_database_url(cls, v: Any) -> str:
         if not isinstance(v, str):
             return v
+        v = v.strip()
         # Ensure asyncpg driver is specified
         if v.startswith("postgres://"):
             v = "postgresql+asyncpg://" + v[len("postgres://") :]

@@ -26,7 +26,14 @@ class BigQueryClient:
     def get_client(self) -> bigquery.Client:
         """Lazy initialize BigQuery client."""
         if self._client is None:
-            project = self.settings.bigquery_project or self.settings.google_cloud_project
+            raw_project = (
+                self.settings.bigquery_project
+                or self.settings.google_cloud_project
+                or os.environ.get("BIGQUERY_PROJECT")
+                or os.environ.get("GOOGLE_CLOUD_PROJECT")
+                or ""
+            )
+            project = raw_project.strip()
             if not project:
                 raise ValueError("BIGQUERY_PROJECT is not configured in environment.")
 
@@ -42,11 +49,19 @@ class BigQueryClient:
 
     @property
     def dataset_id(self) -> str:
-        return self.settings.bigquery_dataset or "voxora_bigquery_sa"
+        raw_ds = self.settings.bigquery_dataset or os.environ.get("BIGQUERY_DATASET") or "voxora_bigquery_sa"
+        return raw_ds.strip()
 
     @property
     def full_dataset_path(self) -> str:
-        project = self.settings.bigquery_project or self.settings.google_cloud_project
+        raw_project = (
+            self.settings.bigquery_project
+            or self.settings.google_cloud_project
+            or os.environ.get("BIGQUERY_PROJECT")
+            or os.environ.get("GOOGLE_CLOUD_PROJECT")
+            or ""
+        )
+        project = raw_project.strip()
         return f"{project}.{self.dataset_id}"
 
     async def execute_query(self, sql: str, timeout_seconds: float = 15.0) -> dict[str, Any]:
