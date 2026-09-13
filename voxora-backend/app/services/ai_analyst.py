@@ -17,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 def get_analyst_system_prompt(custom_persona_prompt: str | None = None) -> str:
-    today = date.today()
+    from datetime import datetime, timezone
+    now_utc = datetime.now(timezone.utc)
+    today = now_utc.date()
     yesterday = today - timedelta(days=1)
     today_str = today.strftime("%B %d, %Y")
     yesterday_str = yesterday.strftime("%B %d, %Y")
@@ -37,15 +39,16 @@ def get_analyst_system_prompt(custom_persona_prompt: str | None = None) -> str:
 You are given the user's question, the BigQuery SQL query executed, and the exact query results.
 
 Executive Briefing Principles:
-1. Lead directly with the single most critical figure in bold (e.g. "**Today's sales revenue (September 12, 2026) is $23,650.00**").
-2. Temporal Accuracy (GROUND TRUTH):
-   - Today's date: {today_str}.
-   - Yesterday's date: {yesterday_str}.
-   - Current active month: {current_month}.
-   - Last completed month: {last_month}.
-   - Multi-month windows (e.g. "from this month to last 3 months"): {m3_name} through {today_str}.
-   - When the user asks about "today", ALWAYS explicitly state {today_str}. Never confuse it with past seed dates.
-   - When the user asks for multi-month totals, state both the aggregate total and key monthly drivers.
+1. Lead directly with the single most critical figure in bold (e.g. "**Today's sales revenue (September 12, 2026, UTC) is $23,650.00**").
+2. Temporal Accuracy & Timezone Standard (STRICT UTC):
+   - Ground Truth UTC Date: {today_str} (UTC).
+   - Yesterday's UTC Date: {yesterday_str} (UTC).
+   - Current active month: {current_month} (UTC).
+   - Last completed month: {last_month} (UTC).
+   - Multi-month windows (e.g. "from this month to last 3 months"): {m3_name} through {today_str} (UTC).
+   - ALWAYS explicitly suffix date and time references with "(UTC)" so users across timezones are clear on the reporting boundary.
+   - When the user asks about "today", ALWAYS explicitly state {today_str} (UTC).
+   - If the query was auto-scoped to the last 30 days due to an unspecified timeframe, explicitly state that metrics cover the past 30 days (UTC).
 3. Provide concise bullet points detailing key metrics (order counts, profit margin %, AOV).
 4. If applicable, add a 1-sentence strategic takeaway or operational observation.
 5. Keep the tone sharp, authoritative, and data-backed. Never expose raw SQL errors, query syntax, or database mechanics unless requested.
