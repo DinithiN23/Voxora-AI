@@ -245,7 +245,7 @@ class DashboardService:
             ]
         except Exception as e:
             logger.error(f"Failed to fetch executive KPIs: {e}")
-            return []
+            return [{"id": "error", "label": "Data Unavailable", "value": 0, "formatted_value": "Err", "status": "error", "error_message": str(e)}]
 
     async def _fetch_sales_kpis(self, dataset: str, date_where: str) -> list[dict[str, Any]]:
         sql_totals = f"""
@@ -338,7 +338,7 @@ class DashboardService:
             ]
         except Exception as e:
             logger.error(f"Failed to fetch sales KPIs: {e}")
-            return []
+            return [{"id": "error", "label": "Data Unavailable", "value": 0, "formatted_value": "Err", "status": "error", "error_message": str(e)}]
 
     async def _fetch_customer_kpis(self, dataset: str, date_where: str) -> list[dict[str, Any]]:
         sql = f"""
@@ -432,7 +432,7 @@ class DashboardService:
             ]
         except Exception as e:
             logger.error(f"Failed to fetch customer KPIs: {e}")
-            return []
+            return [{"id": "error", "label": "Data Unavailable", "value": 0, "formatted_value": "Err", "status": "error", "error_message": str(e)}]
 
     # ══════════════════════════════════════════════════════════════
     # Chart Fetchers with Granularity (Daily / Monthly / Yearly)
@@ -478,8 +478,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch revenue trend: {e}")
-            return self._empty_chart("chart-revenue-trend", title, "area")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-revenue-trend", "title": title, "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_sales_trend(
         self,
@@ -520,8 +520,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch sales trend: {e}")
-            return self._empty_chart("chart-sales-monthly-trend", "Sales Run-Rate", "area")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-sales-monthly-trend", "title": "Sales Run-Rate", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_customer_trend(
         self,
@@ -561,8 +561,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch customer trend: {e}")
-            return self._empty_chart("chart-cust-monthly-expansion", "Active Accounts", "area")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-cust-monthly-expansion", "title": "Active Accounts", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_region_comparison(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -591,8 +591,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch region comparison: {e}")
-            return self._empty_chart("chart-sales-region-comparison", "Territory Revenue & Profit", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-sales-region-comparison", "title": "Territory Revenue & Profit", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_revenue_by_region(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -621,8 +621,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch revenue by region: {e}")
-            return self._empty_chart("chart-revenue-region", "Revenue by Territory", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-revenue-region", "title": "Revenue by Territory", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_revenue_by_segment(
         self, dataset: str, date_where: str, title: str = "Revenue by Customer Segment"
@@ -651,8 +651,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch revenue by segment: {e}")
-            return self._empty_chart("chart-revenue-segment", title, "pie")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-revenue-segment", "title": title, "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_channel_share(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -678,8 +678,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch channel share: {e}")
-            return self._empty_chart("chart-sales-channel-share", "Channel Revenue Contribution", "pie")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-sales-channel-share", "title": "Channel Revenue Contribution", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_product_category_sales(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -709,8 +709,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch product category sales: {e}")
-            return self._empty_chart("chart-sales-product-category", "Product Category Sales", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-sales-product-category", "title": "Product Category Sales", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_channel_deal_size(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -739,8 +739,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch channel deal size: {e}")
-            return self._empty_chart("chart-channel-deal-size", "Average Deal Size", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-channel-deal-size", "title": "Average Deal Size", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_top_enterprise_accounts(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -772,8 +772,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch top accounts: {e}")
-            return self._empty_chart("chart-cust-top-accounts", "Top Accounts", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-cust-top-accounts", "title": "Top Accounts", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_aov_by_tier(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -802,8 +802,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch AOV by tier: {e}")
-            return self._empty_chart("chart-cust-aov-segment", "Average Order Value by Tier", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-cust-aov-segment", "title": "Average Order Value by Tier", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_customer_territory_dist(self, dataset: str) -> dict[str, Any]:
         sql = f"""
@@ -830,8 +830,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch territory distribution: {e}")
-            return self._empty_chart("chart-cust-territory-dist", "Account Territory Distribution", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-cust-territory-dist", "title": "Account Territory Distribution", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_top_products(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -863,8 +863,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch top products: {e}")
-            return self._empty_chart("chart-top-products", "Top Products", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-top-products", "title": "Top Products", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     async def _fetch_channel_performance(self, dataset: str, date_where: str) -> dict[str, Any]:
         sql = f"""
@@ -894,8 +894,8 @@ class DashboardService:
                 "data_payload": {"rows": result.get("rows", [])},
             }
         except Exception as e:
-            logger.error(f"Failed to fetch channel performance: {e}")
-            return self._empty_chart("chart-channel-performance", "Channel Performance", "bar")
+            logger.error(f"Failed to fetch: {e}")
+            return {"id": "chart-channel-performance", "title": "Channel Performance", "chart_type": "error", "status": "error", "error_message": str(e)}
 
     # ══════════════════════════════════════════════════════════════
     # Date Filtering & Helpers

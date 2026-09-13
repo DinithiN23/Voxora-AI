@@ -20,15 +20,19 @@ class KPICard(BaseModel):
     trend: str = "neutral"  # "up", "down", "neutral"
     icon: str = ""
     color: str = "#10B981"
+    status: str = "success"
+    error_message: str | None = None
 
 
 class ChartWidget(BaseModel):
     """A dashboard chart widget (bar, line, pie, area, table)."""
     id: str
     title: str
-    chart_type: str  # "bar", "line", "pie", "area", "table"
+    chart_type: str  # "bar", "line", "pie", "area", "table", "error"
     chart_config: dict[str, Any] = Field(default_factory=dict)
     data_payload: dict[str, Any] = Field(default_factory=dict)
+    status: str = "success"
+    error_message: str | None = None
 
 
 class DashboardResponse(BaseModel):
