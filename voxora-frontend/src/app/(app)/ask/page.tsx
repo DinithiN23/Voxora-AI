@@ -333,112 +333,11 @@ function AskContent() {
         }
       }
 
-      // 4. Context-Aware Dynamic Fallback (Never returns the same generic string)
+      // 4. Explicit Connection Error Fallback
       await new Promise((resolve) => setTimeout(resolve, 600));
 
-      const q = userText.toLowerCase().trim();
-      let answerText = "";
-      let answerSuggestions: string[] = [];
-
-      // 4a. Common greetings & persona questions
-      if (
-        /^(hi|hello|hey|good morning|good afternoon|good evening|howdy)\b/.test(q) ||
-        q.includes("how are you") ||
-        q.includes("who are you") ||
-        q.includes("what can you do")
-      ) {
-        answerText =
-          "Hello! I am **Voxora AI**, your Conversational Business Intelligence copilot connected directly to Google BigQuery.\n\n" +
-          "I can help you analyze **revenue trends**, investigate **product performance**, evaluate **regional margins**, or generate **interactive charts** from your live database. How can I help you today?";
-        answerSuggestions = [
-          "What was last month's revenue?",
-          "Show revenue breakdown by region",
-          "What were our top 3 products?",
-        ];
-      }
-      // 4b. Out-of-Context / Irrelevant Fallback & Escalation
-      else if (
-        [
-          "recipe", "cake", "cook", "bake", "game", "movie", "film", "actor", "actress",
-          "song", "music", "football", "soccer", "cricket", "basketball", "weather",
-          "forecast", "joke", "story", "poem", "politics", "dating", "homework",
-          "capital of", "who invented", "translate"
-        ].some((w) => q.includes(w))
-      ) {
-        answerText =
-          "I am **Voxora AI**, your specialized business intelligence copilot. I focus exclusively on your organization's " +
-          "**revenue metrics, sales performance, product trends, and Google BigQuery data**.\n\n" +
-          "I cannot assist with topics outside organizational analytics. However, I would be glad to help you explore your sales trends, top-selling products, or regional performance.\n\n" +
-          "*If you need technical assistance or general support, please reach out to your organization administrator.*";
-        answerSuggestions = [
-          "What was last month's revenue?",
-          "Compare this month with last month",
-          "What are our top products by revenue?",
-        ];
-      }
-      // 4c. Last Month Revenue (August 2026)
-      else if (
-        (q.includes("last month") || q.includes("previous month") || q.includes("august")) &&
-        (q.includes("revenue") || q.includes("sales") || q.includes("total") || q.includes("say"))
-      ) {
-        answerText =
-          "Based on Google BigQuery analytics data, **August 2026 (last month) total revenue was $1,188,100 ($1.19M)**, representing our highest completed month of Q3 with **3,842 orders**.\n\n" +
-          "* **Average Order Value (AOV)**: $309.24\n" +
-          "* **Month-over-Month Growth**: **+10.8%** compared to July ($1.07M)\n" +
-          "* **Top Contributing Region**: Eastern Region ($412K)\n" +
-          "* **Leading Product Line**: Voxora Enterprise AI Suite ($430K)";
-        answerSuggestions = [
-          "How does August compare to July?",
-          "What about today's revenues in sales?",
-          "Show regional breakdown for August",
-        ];
-      }
-      // 4d. Today / This Month Revenue (September 2026 MTD)
-      else if (
-        (q.includes("today") || q.includes("this month") || q.includes("current month") || q.includes("september")) &&
-        (q.includes("revenue") || q.includes("sales") || q.includes("total"))
-      ) {
-        answerText =
-          "Based on Google BigQuery analytics data, **September 2026 (Month-to-Date) revenue is currently tracking at $441,500 ($441.5K)** across **1,420 orders** as of September 10, 2026.\n\n" +
-          "* **Latest Single-Day Revenue (Sep 10)**: **$62,350**\n" +
-          "* **Daily Average**: ~$44,150 / day\n" +
-          "* **Projected Month-End Close**: $1.25M - $1.32M\n" +
-          "* **Top Channel**: Direct Sales (48% of total volume)";
-        answerSuggestions = [
-          "What was last month's revenue?",
-          "What are our top-selling products this month?",
-          "How is daily revenue trending?",
-        ];
-      }
-      // 4e. Top Products
-      else if (q.includes("top") && (q.includes("product") || q.includes("item") || q.includes("sku"))) {
-        answerText =
-          "Here are our **top 3 products by revenue** from Google BigQuery:\n\n" +
-          "1. **Voxora Enterprise AI Suite**: **$450,000** (1,450 units sold)\n" +
-          "2. **Cloud Storage Pro**: **$320,000** (1,220 units sold)\n" +
-          "3. **API Gateway Standard**: **$210,000** (940 units sold)\n\n" +
-          "**Voxora Enterprise AI Suite** is our primary revenue driver, contributing approximately **34.3%** of total product revenue.";
-        answerSuggestions = [
-          "What are the profit margins on these products?",
-          "Show revenue breakdown by region",
-          "What was last month's revenue?",
-        ];
-      }
-      // 4f. General Analytical Fallback
-      else {
-        answerText =
-          "Based on Google BigQuery analytics data for your organization:\n\n" +
-          "- **Year-to-Date (2026) Total Revenue**: **$9,852,400 ($9.85M)**\n" +
-          "- **Active Customer Accounts**: 1,240 enterprise accounts\n" +
-          "- **Overall Profit Margin**: **58.4%**\n" +
-          "- **Primary Growth Driver**: Eastern Region (+18.4% YoY)\n\n" +
-          "Would you like to drill deeper into revenue breakdown by region, product line, or customer tier?";
-        answerSuggestions = [
-          "What was last month's revenue?",
-          "What about today's revenues in sales?",
-          "Show revenue breakdown by region",
-        ];
-      }
+      const answerText = "⚠️ **Connection to analytics engine lost.** Click here to retry.";
+      const answerSuggestions: string[] = [];
 
       setMessages((prev) =>
         prev.map((msg) =>
