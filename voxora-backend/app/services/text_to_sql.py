@@ -115,8 +115,24 @@ class TextToSQLEngine:
         If no temporal filter is present, auto-injects a safe default (last 30 days) to prevent
         unintended full-table scans.
         """
-        import sqlglot
-        from sqlglot import exp
+        try:
+            import sqlglot
+            from sqlglot import exp
+            has_sqlglot = True
+        except ImportError:
+            has_sqlglot = False
+            logger.warning("sqlglot is not installed; falling back to safe regex SQL validation")
+
+        if not has_sqlglot:
+            clean_sql = sql.strip().rstrip(";")
+            upper = clean_sql.upper()
+            if not upper.startswith("SELECT"):
+                raise SQLValidationError("Only read-only SELECT queries are allowed.")
+            forbidden = ["DROP ", "DELETE ", "UPDATE ", "INSERT ", "ALTER ", "TRUNCATE ", "CREATE "]
+            for word in forbidden:
+                if word in upper:
+                    raise SQLValidationError(f"Query contains forbidden keyword: {word.strip()}")
+            return clean_sql, False
 
         try:
             parsed = sqlglot.parse_one(sql, dialect="bigquery")

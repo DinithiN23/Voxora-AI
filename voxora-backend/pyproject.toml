@@ -46,6 +46,8 @@ dependencies = [
     "httpx>=0.28.0",
     "python-dotenv>=1.0.0",
     "orjson>=3.10.0",
+    "sqlglot>=23.0.0",
+    "mangum>=0.17.0",
 ]
 
 [project.optional-dependencies]
