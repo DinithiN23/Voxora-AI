@@ -20,24 +20,44 @@ class VoiceService:
     def __init__(self) -> None:
         self.settings = get_settings()
 
-    def _get_tts_client(self) -> texttospeech.TextToSpeechClient | None:
+    def _get_credentials(self):
+        import json
+        from google.oauth2 import service_account
+        gcp_json = os.environ.get("GOOGLE_CREDENTIALS_JSON")
+        if gcp_json:
+            try:
+                cred_info = json.loads(gcp_json)
+                return service_account.Credentials.from_service_account_info(cred_info)
+            except Exception as e:
+                logger.error(f"Failed to parse GOOGLE_CREDENTIALS_JSON: {e}")
+        
         cred_path = self.settings.google_application_credentials
         if cred_path and os.path.exists(cred_path):
             os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(cred_path)
-            try:
+            return None # Default credentials will use the env var we just set
+            
+        return None
+
+    def _get_tts_client(self) -> texttospeech.TextToSpeechClient | None:
+        try:
+            creds = self._get_credentials()
+            if creds:
+                return texttospeech.TextToSpeechClient(credentials=creds)
+            elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
                 return texttospeech.TextToSpeechClient()
-            except Exception as e:
-                logger.warning("Could not initialize TextToSpeechClient: %s", e)
+        except Exception as e:
+            logger.warning("Could not initialize TextToSpeechClient: %s", e)
         return None
 
     def _get_stt_client(self) -> speech.SpeechClient | None:
-        cred_path = self.settings.google_application_credentials
-        if cred_path and os.path.exists(cred_path):
-            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = os.path.abspath(cred_path)
-            try:
+        try:
+            creds = self._get_credentials()
+            if creds:
+                return speech.SpeechClient(credentials=creds)
+            elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
                 return speech.SpeechClient()
-            except Exception as e:
-                logger.warning("Could not initialize SpeechClient: %s", e)
+        except Exception as e:
+            logger.warning("Could not initialize SpeechClient: %s", e)
         return None
 
     async def synthesize_speech(
