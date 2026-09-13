@@ -541,6 +541,55 @@ async def archive_conversation(
     await db.flush()
 
 
+@router.get("/{conversation_id}/summary")
+async def get_conversation_summary(
+    conversation_id: UUID,
+    current_user: TokenPayload = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Generate a dynamic summary of the conversation so far.
+    """
+    result = await db.execute(
+        select(Conversation).where(
+            Conversation.id == conversation_id,
+            Conversation.user_id == current_user.user_id,
+        )
+    )
+    conversation = result.scalar_one_or_none()
+
+    if not conversation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conversation not found")
+
+    history_result = await db.execute(
+        select(Message)
+        .where(Message.conversation_id == conversation.id)
+        .order_by(Message.created_at.asc())
+    )
+    history_messages = history_result.scalars().all()
+
+    if len(history_messages) < 2:
+        return {"summary": "Not enough conversation history to summarize yet. Chat a bit more first!"}
+
+    chat_history = [
+        {"role": m.role, "content": m.content}
+        for m in history_messages
+        if m.role in ("user", "assistant")
+    ]
+
+    prompt = (
+        "You are a business intelligence summarizer. Read the following conversation between a user and an AI analytics assistant. "
+        "Provide a concise, bulleted executive summary of the key insights, metrics, and conclusions discussed in the chat. "
+        "Keep it strictly under 150 words. Do not introduce new information."
+    )
+
+    try:
+        summary_text, _ = await llm_service.generate_response(chat_history, system_prompt=prompt)
+    except Exception:
+        summary_text = "Summary unavailable due to connection issues."
+
+    return {"summary": summary_text}
+
 
 def _generate_suggestions(question: str) -> list[str]:
     """Generate follow-up question suggestions based on the current question."""

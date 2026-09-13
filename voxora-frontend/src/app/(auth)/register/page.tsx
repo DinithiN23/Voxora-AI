@@ -20,7 +20,7 @@ export default function RegisterPage() {
     e.preventDefault();
     try {
       await register(email, name, password, tenantName);
-      router.push("/ask");
+      router.push("/dashboards/executive");
     } catch {
       // Error is handled by the store
     }

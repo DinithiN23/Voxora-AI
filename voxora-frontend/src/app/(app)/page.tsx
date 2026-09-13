@@ -7,7 +7,7 @@ export default function AppHomePage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/ask");
+    router.replace("/dashboards/executive");
   }, [router]);
 
   return null;

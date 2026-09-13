@@ -177,6 +177,31 @@ class DashboardService:
         }
 
     # ══════════════════════════════════════════════════════════════
+    # 4. Today's Summary (For Ask Voxora Sidebar)
+    # ══════════════════════════════════════════════════════════════
+
+    async def get_today_summary(self) -> dict[str, Any]:
+        """
+        Build a 'Today's Summary' payload for the Ask Voxora page.
+        Fetches today's revenue, profit, and order count.
+        """
+        dataset = bigquery_client.full_dataset_path
+        # Use CURRENT_DATE() to get today's data (or a fixed date if testing, but we'll use CURRENT_DATE() to be correct)
+        # However, the script `append_today_data.py` appends data for today.
+        date_where = "WHERE DATE(order_date) = CURRENT_DATE()"
+        range_label = "Today"
+
+        kpis = await self._fetch_executive_kpis(dataset, date_where)
+        for kpi in kpis:
+            kpi["period_label"] = range_label
+
+        return {
+            "kpis": kpis,
+            "last_updated": datetime.now(timezone.utc).isoformat(),
+            "data_range": range_label,
+        }
+
+    # ══════════════════════════════════════════════════════════════
     # KPI Fetchers
     # ══════════════════════════════════════════════════════════════
 

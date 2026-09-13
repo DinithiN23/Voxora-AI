@@ -23,6 +23,9 @@ from app.schemas.agent import (
     GlossaryItem,
 )
 from app.services.llm_service import llm_service
+from app.services.text_to_sql import text_to_sql_engine
+from app.integrations.bigquery.client import bigquery_client
+from app.services.ai_analyst import ai_analyst_service
 
 logger = logging.getLogger(__name__)
 
@@ -299,14 +302,32 @@ class AgentStudioService:
             {"role": "user", "content": request.question}
         ]
 
+        is_analytics_query = any(k in request.question.lower() for k in (
+            "revenue", "sale", "order", "product", "customer", "region", "profit",
+            "margin", "top", "trend", "compare", "month", "breakdown", "performance",
+            "channel", "growth", "kpi", "metric", "cost", "average", "highest", "lowest"
+        ))
+
         try:
-            response_text, provider = await llm_service.generate_response(
-                messages=messages,
-                system_prompt=effective_prompt,
-            )
+            if is_analytics_query:
+                sql_res = await text_to_sql_engine.generate_sql(request.question, [])
+                query_res = await bigquery_client.execute_query(sql_res.sql)
+                
+                chunks = []
+                async for chunk in ai_analyst_service.stream_analysis(
+                    request.question, sql_res.sql, query_res, system_prompt=effective_prompt
+                ):
+                    chunks.append(chunk)
+                response_text = "".join(chunks)
+                provider = sql_res.provider
+            else:
+                response_text, provider = await llm_service.generate_response(
+                    messages=messages,
+                    system_prompt=effective_prompt,
+                )
         except Exception as e:
             logger.error("Sandbox test error: %s", e)
-            response_text = "Error: Failed to generate response from the analytics engine. Please check your configuration and try again."
+            response_text = "⚠️ **Data Retrieval Notice**: I was unable to retrieve the underlying business data from the warehouse to answer this question accurately."
             provider = "error"
 
         latency = int((time.time() - start_time) * 1000)

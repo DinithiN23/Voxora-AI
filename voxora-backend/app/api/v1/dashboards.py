@@ -94,3 +94,17 @@ async def get_customer_dashboard(
     except Exception as e:
         logger.error(f"Customer dashboard fetch failed: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to load customer dashboard: {str(e)}")
+
+
+@router.get("/today_summary", response_model=DashboardResponse)
+async def get_today_summary():
+    """
+    Fetch Today's Summary.
+    Returns high-level business KPIs for the current day.
+    """
+    try:
+        data = await dashboard_service.get_today_summary()
+        return DashboardResponse(**data)
+    except Exception as e:
+        logger.error(f"Today's summary fetch failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to load today's summary: {str(e)}")

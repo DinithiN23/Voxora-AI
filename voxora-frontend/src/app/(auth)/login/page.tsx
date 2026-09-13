@@ -18,7 +18,7 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       await login(email, password);
-      router.push("/ask");
+      router.push("/dashboards/executive");
     } catch {
       // Error is handled by the store
     }

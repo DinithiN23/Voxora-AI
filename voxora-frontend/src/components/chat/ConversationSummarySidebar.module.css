@@ -1,0 +1,170 @@
+.sidebar {
+  width: 280px;
+  background: var(--vx-bg-glass);
+  backdrop-filter: var(--vx-glass-blur);
+  border-left: 1px solid var(--vx-border-light);
+  display: flex;
+  flex-direction: column;
+  padding: var(--vx-space-lg);
+  gap: var(--vx-space-lg);
+  animation: vx-fade-in-right var(--vx-duration-normal) var(--vx-ease);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header h3 {
+  font-size: var(--vx-text-md);
+  font-weight: 600;
+  color: var(--vx-text-primary);
+}
+
+.liveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--vx-text-xs);
+  color: #10b981;
+  font-weight: 500;
+}
+
+.pulseDot {
+  width: 6px;
+  height: 6px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: vx-pulse-glow 2s infinite;
+}
+
+.kpiList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vx-space-md);
+}
+
+.kpiCard {
+  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid var(--vx-border-light);
+  border-radius: var(--vx-radius-md);
+  padding: var(--vx-space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kpiLabel {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-secondary);
+}
+
+.kpiValue {
+  font-size: var(--vx-text-xl);
+  font-weight: 700;
+}
+
+.loading {
+  font-size: var(--vx-text-sm);
+  color: var(--vx-text-secondary);
+  text-align: center;
+  padding: var(--vx-space-xl) 0;
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--vx-text-xs);
+  color: var(--vx-text-tertiary);
+}
+
+.sidebarClosed {
+  width: 48px;
+  background: var(--vx-bg-glass);
+  backdrop-filter: var(--vx-glass-blur);
+  border-left: 1px solid var(--vx-border-light);
+  display: flex;
+  flex-direction: column;
+  padding: var(--vx-space-md);
+  align-items: center;
+  cursor: pointer;
+  transition: background var(--vx-duration-normal);
+}
+
+.sidebarClosed:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  color: var(--vx-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vx-text-primary);
+}
+
+.openBtn {
+  background: none;
+  border: none;
+  color: var(--vx-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refreshBtn {
+  background: none;
+  border: none;
+  color: var(--vx-text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refreshBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--vx-text-primary);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.generateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--vx-space-sm) var(--vx-space-md);
+  background: var(--vx-brand-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--vx-radius-md);
+  font-size: var(--vx-text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--vx-duration-normal);
+}
+
+.generateBtn:hover {
+  background: var(--vx-brand-primary-hover);
+  transform: translateY(-1px);
+}
+
